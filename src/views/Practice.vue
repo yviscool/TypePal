@@ -203,8 +203,8 @@
                 <div class="mb-16 relative">
                     <!-- 单词显示区域 - 完全居中 -->
                     <div class="flex justify-center mb-8">
-                        <div
-                            class="text-7xl md:text-8xl font-bold tracking-wider select-none flex items-center relative">
+                        <div class="text-7xl md:text-8xl font-bold tracking-wider select-none flex items-center relative"
+                            :class="{ 'animate-word-shake': errorMessage }">
                             <span v-for="(char, index) in currentWord.word" :key="index" :class="getCharClass(index)"
                                 class="inline-block transition-all duration-300 ease-out transform hover:scale-110"
                                 :style="getCharStyle(index)">
@@ -744,8 +744,37 @@ onUnmounted(() => {
     }
 }
 
+@keyframes word-shake {
+
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+
+    10%,
+    30%,
+    50%,
+    70%,
+    90% {
+        transform: translateX(-3px);
+    }
+
+    20%,
+    40%,
+    60%,
+    80% {
+        transform: translateX(3px);
+    }
+}
+
 .animate-shake {
     animation: shake 0.5s ease-in-out;
+}
+
+.animate-word-shake {
+    animation: word-shake 0.6s ease-in-out;
+    color: #ef4444 !important;
+    text-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
 }
 
 input:disabled {
