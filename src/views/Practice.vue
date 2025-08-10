@@ -89,7 +89,17 @@
                             练习选项
                         </label>
                         <div class="space-y-3">
-                            <label class="flex items-center gap-3 text-sm cursor-pointer group">
+                            <!-- 难度模式选择 -->
+                            <div class="space-y-2">
+                                <label class="text-xs font-medium text-gray-700 dark:text-white/70">练习模式</label>
+                                <select v-model="settings.practiceMode"
+                                    class="w-full px-3 py-2 rounded-lg bg-white/15 backdrop-blur-sm border border-white/30 focus:border-electric-blue focus:ring-2 focus:ring-electric-blue/20 focus:outline-none text-black text-xs font-medium transition-all duration-300 hover:bg-white/20">
+                                    <option value="normal">🎯 普通模式 (允许退格修正)</option>
+                                    <option value="strict">⚡ 严格模式 (一错重来)</option>
+                                </select>
+                            </div>
+                            
+                            <label class="flex items-center gap-3 text-sm cursor-pointer group relative">
                                 <div class="relative">
                                     <input v-model="settings.loopOnError" type="checkbox"
                                         class="w-5 h-5 rounded-lg border-2 border-white/30 bg-white/10 checked:bg-gradient-to-br checked:from-electric-blue checked:to-electric-blue/80 checked:border-electric-blue transition-all duration-300 focus:ring-2 focus:ring-electric-blue/20">
@@ -101,8 +111,18 @@
                                 </div>
                                 <span
                                     class="text-gray-800 dark:text-white/80 group-hover:text-gray-900 dark:group-hover:text-white transition-colors duration-200">错误时循环</span>
+                                <button @click="showTooltip('loopOnError')" @mouseleave="hideTooltip"
+                                    class="ml-auto p-1 rounded-full hover:bg-white/20 transition-colors duration-200">
+                                    <div class="i-ph-question text-sm text-white/60 hover:text-white/80"></div>
+                                </button>
+                                <!-- 工具提示 -->
+                                <div v-if="tooltipVisible === 'loopOnError'"
+                                    class="absolute left-0 top-8 z-20 w-64 p-3 bg-gray-900/95 backdrop-blur-sm text-white text-xs rounded-lg border border-white/20 shadow-xl">
+                                    开启后，若单词拼写错误，需重新完整输入该单词方可进入下一个
+                                </div>
                             </label>
-                            <label class="flex items-center gap-3 text-sm cursor-pointer group">
+                            
+                            <label class="flex items-center gap-3 text-sm cursor-pointer group relative">
                                 <div class="relative">
                                     <input v-model="settings.soundEnabled" type="checkbox"
                                         class="w-5 h-5 rounded-lg border-2 border-white/30 bg-white/10 checked:bg-gradient-to-br checked:from-electric-blue checked:to-electric-blue/80 checked:border-electric-blue transition-all duration-300 focus:ring-2 focus:ring-electric-blue/20">
@@ -114,6 +134,15 @@
                                 </div>
                                 <span
                                     class="text-gray-800 dark:text-white/80 group-hover:text-gray-900 dark:group-hover:text-white transition-colors duration-200">发音提示</span>
+                                <button @click="showTooltip('soundEnabled')" @mouseleave="hideTooltip"
+                                    class="ml-auto p-1 rounded-full hover:bg-white/20 transition-colors duration-200">
+                                    <div class="i-ph-question text-sm text-white/60 hover:text-white/80"></div>
+                                </button>
+                                <!-- 工具提示 -->
+                                <div v-if="tooltipVisible === 'soundEnabled'"
+                                    class="absolute left-0 top-8 z-20 w-64 p-3 bg-gray-900/95 backdrop-blur-sm text-white text-xs rounded-lg border border-white/20 shadow-xl">
+                                    开启后，每个单词会自动播放发音，帮助学习正确读音
+                                </div>
                             </label>
                         </div>
                     </div>
@@ -235,6 +264,21 @@
                 <input ref="inputRef" v-model="userInput" type="text" class="fixed opacity-0 pointer-events-none"
                     style="left: -9999px; top: -9999px;" @input="onInput" @keydown="onKeydown" :disabled="isPaused"
                     autocomplete="off" spellcheck="false">
+
+                <!-- 连击显示 -->
+                <div v-if="comboCount >= 3" 
+                    class="mb-6 flex justify-center">
+                    <div class="px-6 py-3 bg-gradient-to-r from-orange-500/20 to-red-500/20 backdrop-blur-sm border border-orange-500/40 rounded-2xl shadow-lg"
+                        :class="{ 'animate-combo-pulse': showCombo }">
+                        <div class="flex items-center gap-3">
+                            <div class="text-2xl">🔥</div>
+                            <div>
+                                <div class="text-lg font-bold text-orange-400">Combo x{{ comboCount }}</div>
+                                <div class="text-xs text-orange-300/80">连击中！保持节奏</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- 实时统计信息 -->
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
@@ -401,6 +445,12 @@ const successMessage = ref('')
 const currentTime = ref(0)
 const timeInterval = ref<number | null>(null)
 
+// 新增功能相关状态
+const comboCount = ref(0)
+const showCombo = ref(false)
+const comboTimeout = ref<number | null>(null)
+const tooltipVisible = ref<string>('')
+
 // 从 store 获取数据 (使用 storeToRefs 保持响应性)
 const {
     currentDictionary,
@@ -503,18 +553,29 @@ const onInput = () => {
         const expectedChar = currentWord.value.word[currentIndex]
 
         if (currentChar !== expectedChar) {
-            // 错误输入，显示错误提示并从头开始
-            errorMessage.value = '哎呀，手指打滑了~ 从头开始！'
-            setTimeout(clearMessages, 800)
-
-            // 打错需要从头开始
-            userInput.value = ''
-            // 错误时不增加计数，让用户重新输入同一个单词
+            // 根据练习模式处理错误
+            if (settings.value.practiceMode === 'strict') {
+                // 严格模式：一错重来
+                errorMessage.value = '哎呀，手指打滑了~ 从头开始！'
+                setTimeout(clearMessages, 800)
+                userInput.value = ''
+                // 重置连击
+                resetCombo()
+            } else {
+                // 普通模式：允许退格修正，但标红错误字符
+                errorMessage.value = '输入错误，请使用退格键修正'
+                setTimeout(clearMessages, 1500)
+                // 重置连击
+                resetCombo()
+            }
         } else {
             // 正确输入，检查是否完成单词
             if (userInput.value.length === currentWord.value.word.length) {
                 // 单词完成，显示成功消息并自动跳转
                 successMessage.value = '完美！'
+                
+                // 增加连击
+                incrementCombo()
 
                 setTimeout(() => {
                     clearMessages()
@@ -553,8 +614,11 @@ const onKeydown = (event: KeyboardEvent) => {
 
     // 处理退格键
     if (event.key === 'Backspace') {
-        if (settings.value.loopOnError && errorMessage.value) {
-            // 在循环模式下，如果有错误，允许退格
+        if (settings.value.practiceMode === 'normal') {
+            // 普通模式：允许退格修正
+            clearMessages()
+        } else if (settings.value.loopOnError && errorMessage.value) {
+            // 严格模式下，在循环模式下，如果有错误，允许退格
             clearMessages()
         }
     }
@@ -655,6 +719,57 @@ const previousWord = () => {
             inputRef.value?.focus()
         })
     }
+}
+
+// 连击系统相关函数
+const incrementCombo = () => {
+    comboCount.value++
+    showCombo.value = true
+    
+    // 清除之前的超时
+    if (comboTimeout.value) {
+        clearTimeout(comboTimeout.value)
+    }
+    
+    // 设置动画效果
+    setTimeout(() => {
+        showCombo.value = false
+    }, 500)
+    
+    // 特殊连击里程碑提示
+    if (comboCount.value === 10) {
+        successMessage.value = '🎉 连击 x10！状态火热！'
+        setTimeout(clearMessages, 1500)
+    } else if (comboCount.value === 25) {
+        successMessage.value = '🔥 连击 x25！无人能挡！'
+        setTimeout(clearMessages, 1500)
+    } else if (comboCount.value === 50) {
+        successMessage.value = '⚡ 连击 x50！键盘之神！'
+        setTimeout(clearMessages, 1500)
+    }
+}
+
+const resetCombo = () => {
+    if (comboCount.value >= 3) {
+        // 只有在有连击的情况下才显示中断消息
+        errorMessage.value = `💔 连击中断！之前连击 x${comboCount.value}`
+    }
+    comboCount.value = 0
+    showCombo.value = false
+    
+    if (comboTimeout.value) {
+        clearTimeout(comboTimeout.value)
+        comboTimeout.value = null
+    }
+}
+
+// 工具提示相关函数
+const showTooltip = (key: string) => {
+    tooltipVisible.value = key
+}
+
+const hideTooltip = () => {
+    tooltipVisible.value = ''
 }
 
 // 启动实时计时器
@@ -767,6 +882,15 @@ onUnmounted(() => {
     }
 }
 
+@keyframes combo-pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
 .animate-shake {
     animation: shake 0.5s ease-in-out;
 }
@@ -775,6 +899,10 @@ onUnmounted(() => {
     animation: word-shake 0.6s ease-in-out;
     color: #ef4444 !important;
     text-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
+}
+
+.animate-combo-pulse {
+    animation: combo-pulse 0.5s ease-in-out;
 }
 
 input:disabled {
