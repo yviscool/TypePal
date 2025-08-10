@@ -15,13 +15,6 @@
                 </div>
 
                 <div class="flex items-center gap-2">
-                    <!-- 返回上个单词按钮 -->
-                    <button @click="previousWord" :disabled="currentWordIndex === 0"
-                        class="p-2 rounded-lg hover:bg-white/10 transition-colors duration-200 disabled:opacity-30 disabled:cursor-not-allowed"
-                        title="返回上个单词">
-                        <div class="i-ph-arrow-up text-xl"></div>
-                    </button>
-
                     <!-- 设置展开按钮 -->
                     <button @click="showSettings = !showSettings"
                         class="p-2 rounded-lg hover:bg-white/10 transition-colors duration-200"
@@ -165,8 +158,47 @@
 
 
         <!-- 主练习区域 -->
-        <div class="max-w-4xl mx-auto mt-20">
+        <div class="max-w-4xl mx-auto mt-20 relative">
             <div v-if="!isCompleted && currentWord" class="text-center">
+                <!-- 浮动导航按钮 - 上一个单词 (左侧) -->
+                <div class="fixed left-4 md:left-8 top transform -translate-y-1/2 z-10">
+                    <button @click="previousWord" :disabled="currentWordIndex === 0"
+                        class="group p-3 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20 hover:scale-105 transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed shadow-lg"
+                        title="上一个单词">
+                        <div class="flex items-center gap-3">
+                            <div
+                                class="i-ph-arrow-left text-xl text-coral-400 group-hover:text-coral-300 transition-colors duration-200">
+                            </div>
+                            <div v-if="currentWordIndex > 0" class="hidden md:block text-left">
+                                <div class="text-sm font-bold text-black/90">{{ currentChapterWords[currentWordIndex -
+                                    1]?.word }}</div>
+                                <div class="text-xs text-black/60 max-w-20 truncate">{{
+                                    currentChapterWords[currentWordIndex - 1]?.translation }}</div>
+                            </div>
+                        </div>
+                    </button>
+                </div>
+
+                <!-- 浮动导航按钮 - 下一个单词 (右侧) -->
+                <div class="fixed right-4 md:right-8 top transform -translate-y-1/2 z-10">
+                    <button @click="skipWord" :disabled="currentWordIndex >= currentChapterWords.length - 1"
+                        class="group p-3 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20 hover:scale-105 transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed shadow-lg"
+                        title="下一个单词">
+                        <div class="flex items-center gap-3">
+                            <div v-if="currentWordIndex < currentChapterWords.length - 1"
+                                class="hidden md:block text-right">
+                                <div class="text-sm font-bold text-black/90">{{ currentChapterWords[currentWordIndex +
+                                    1]?.word }}</div>
+                                <div class="text-xs text-black/60 max-w-20 truncate">{{
+                                    currentChapterWords[currentWordIndex + 1]?.translation }}</div>
+                            </div>
+                            <div
+                                class="i-ph-arrow-right text-xl text-coral-400 group-hover:text-coral-300 transition-colors duration-200">
+                            </div>
+                        </div>
+                    </button>
+                </div>
+
                 <!-- 当前单词显示 -->
                 <div class="mb-16 relative">
                     <!-- 单词显示区域 - 完全居中 -->
@@ -181,7 +213,7 @@
                         </div>
                     </div>
 
-                    <!-- 发音按钮 - 绝对定位到右侧 -->
+                    <!-- 发音按钮 - 绝对定位到右上角 -->
                     <button @click="playPronunciation"
                         class="absolute top-4 right-4 md:right-8 p-4 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20 hover:scale-110 transition-all duration-300 group shadow-lg"
                         title="播放发音">
