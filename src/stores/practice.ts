@@ -65,7 +65,7 @@ export const usePracticeStore = defineStore('practice', () => {
     soundEnabled: true,
     practiceMode: 'normal',
     wordLoopCount: '1',
-    comboEffectsEnabled: true
+    comboEffectsEnabled: false 
   })
 
   // 计算属性
