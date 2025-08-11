@@ -22,11 +22,11 @@ export function usePracticeTimer() {
     return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`
   }
 
-  const startTimer = () => {
+  const startTimer = (shouldPause?: () => boolean) => {
     if (timeInterval.value) return
 
     timeInterval.value = setInterval(() => {
-      if (startTime.value) {
+      if (startTime.value && (!shouldPause || !shouldPause())) {
         currentTime.value = Date.now() - startTime.value
       }
     }, 100) as unknown as number

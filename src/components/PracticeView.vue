@@ -34,7 +34,7 @@
       <!-- 当前单词显示 -->
       <div class="mb-16 relative">
         <!-- DMC风格连击显示 - 使用 ComboDisplay 组件 -->
-        <ComboDisplay :combo-count="comboCount" :show-combo="showCombo" />
+        <ComboDisplay :combo-count="comboCount" :show-combo="showCombo" :enable-effects="settings.comboEffectsEnabled" />
 
         <!-- 单词显示区域 - 完全居中 -->
         <div class="flex justify-center mb-8">

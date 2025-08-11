@@ -44,7 +44,7 @@ export function useKeyboardShortcuts(
       return
     }
 
-    // Enter键 - 在章节完成时进入下一章
+    // Enter键 - 在章节完成时进入下一章（全局处理）
     if (event.key === 'Enter' && state.isCompleted) {
       event.preventDefault()
       if (handlers.onNextChapterOnComplete) {

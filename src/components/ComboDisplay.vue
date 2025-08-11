@@ -1,6 +1,7 @@
 <template>
   <div v-if="comboCount >= 3" class="absolute top-0 left-0 transform -translate-x-4 -translate-y-16 z-20">
-    <div class="relative select-none" :class="{ 'animate-dmc-impact': showCombo }">
+    <!-- 华丽版本的连击显示 -->
+    <div v-if="enableEffects" class="relative select-none" :class="{ 'animate-dmc-impact': showCombo }">
       <!-- COMBO 标签 -->
       <div class="text-center mb-1">
         <div class="text-2xl font-black tracking-[0.2em] opacity-80 transform transition-all duration-300" :class="{
@@ -70,6 +71,16 @@
         }"></div>
       </div>
     </div>
+
+    <!-- 简化版本的连击显示 -->
+    <div v-else class="relative select-none">
+      <div class="px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl">
+        <div class="flex items-center gap-2">
+          <div class="text-sm opacity-60 font-medium">连击</div>
+          <div class="text-lg font-bold text-coral-400">x{{ comboCount }}</div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -77,9 +88,12 @@
 interface Props {
   comboCount: number
   showCombo: boolean
+  enableEffects?: boolean
 }
 
-defineProps<Props>()
+withDefaults(defineProps<Props>(), {
+  enableEffects: true
+})
 </script>
 
 <style scoped>

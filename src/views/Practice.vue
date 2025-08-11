@@ -79,7 +79,7 @@ const isPaused = ref(false)
 
 // 使用组合式函数
 const inputHandler = usePracticeInput()
-const comboSystem = useComboSystem()
+const comboSystem = useComboSystem(() => settings.value)
 const timer = usePracticeTimer()
 
 // 从 store 获取数据 (使用 storeToRefs 保持响应性)
@@ -135,7 +135,7 @@ const handleInput = (event: Event) => {
                 inputHandler.errorMessage.value = `💔 连击中断！之前连击 x${previousCount}`
             }
         },
-        timer.startTimer,
+        () => timer.startTimer(() => isPaused.value || showSettings.value),
         () => {
             // 单词完成后播放下一个单词的发音
             if (settings.value.soundEnabled && currentWord.value) {
@@ -145,6 +145,7 @@ const handleInput = (event: Event) => {
     )
 }
 
+// 处理输入框相关的键盘事件（Enter, Backspace等）
 const handleKeydown = (event: KeyboardEvent) => {
     inputHandler.onKeydown(event, isPaused.value, skipWord)
 }
@@ -191,15 +192,22 @@ const playPronunciation = async () => {
     }
 }
 
-const nextChapter = () => {
-    practiceStore.nextChapter()
+// 封装一个带延迟和检查的播放函数
+const playCurrentWordAudioWithDelay = (delay = 300) => {
     nextTick(() => {
-        focusInput()
         setTimeout(() => {
             if (settings.value.soundEnabled && currentWord.value) {
                 playPronunciation()
             }
-        }, 300)
+        }, delay)
+    })
+}
+
+const nextChapter = () => {
+    practiceStore.nextChapter()
+    nextTick(() => {
+        focusInput()
+        playCurrentWordAudioWithDelay()
     })
 }
 
@@ -213,11 +221,7 @@ const resetCurrentChapter = () => {
     practiceStore.resetChapter()
     nextTick(() => {
         focusInput()
-        setTimeout(() => {
-            if (settings.value.soundEnabled && currentWord.value) {
-                playPronunciation()
-            }
-        }, 300)
+        playCurrentWordAudioWithDelay()
     })
 }
 
@@ -225,11 +229,7 @@ const randomizeChapter = () => {
     practiceStore.shuffleCurrentChapter()
     nextTick(() => {
         focusInput()
-        setTimeout(() => {
-            if (settings.value.soundEnabled && currentWord.value) {
-                playPronunciation()
-            }
-        }, 300)
+        playCurrentWordAudioWithDelay()
     })
 }
 
@@ -238,11 +238,7 @@ const onChapterChange = (value: string) => {
     practiceStore.resetChapter()
     nextTick(() => {
         focusInput()
-        setTimeout(() => {
-            if (settings.value.soundEnabled && currentWord.value) {
-                playPronunciation()
-            }
-        }, 300)
+        playCurrentWordAudioWithDelay()
     })
 }
 
@@ -254,12 +250,23 @@ const focusInput = () => {
 
 const handlePageClick = (event: Event) => {
     const target = event.target as HTMLElement
+
+    // 如果点击的是 select 元素或其子元素，不处理
     if (target.tagName === 'SELECT' || target.closest('select')) {
         return
     }
-    if (target.closest('.settings-panel') || showSettings.value) {
+
+    // 如果设置面板打开，或点击的是设置面板内的元素，不处理
+    if (showSettings.value || target.closest('.settings-panel')) {
         return
     }
+
+    // 如果当前处于暂停状态，不处理
+    if (isPaused.value) {
+        return
+    }
+
+    // 其他情况下聚焦输入框
     focusInput()
 }
 
@@ -267,12 +274,16 @@ const goBack = () => {
     router.push('/')
 }
 
+// 优化：previousWord 改为"仅查看"模式，不影响练习状态
 const previousWord = () => {
     if (currentWordIndex.value > 0) {
-        currentWordIndex.value--
-        userInput.value = ''
-        inputHandler.clearMessages()
-        nextTick(() => focusInput())
+        // 显示一个非模态的预览窗口，而不是直接切换单词
+        const prevWord = currentChapterWords.value[currentWordIndex.value - 1]
+        if (prevWord) {
+            // 可以在这里实现一个小的预览提示
+            inputHandler.successMessage.value = `上一个单词: ${prevWord.word} - ${prevWord.translation}`
+            setTimeout(() => inputHandler.clearMessages(), 2000)
+        }
     }
 }
 

@@ -27,6 +27,7 @@ export interface PracticeSettings {
   soundEnabled: boolean
   practiceMode: 'normal' | 'strict' | 'hardcore'
   wordLoopCount: '1' | '3' | '5' | '8' | 'infinite'
+  comboEffectsEnabled: boolean
 }
 
 export type WordStatus = 'untouched' | 'current' | 'completed' | 'skipped' | 'error'
@@ -63,7 +64,8 @@ export const usePracticeStore = defineStore('practice', () => {
     dictationMode: false,
     soundEnabled: true,
     practiceMode: 'normal',
-    wordLoopCount: '1'
+    wordLoopCount: '1',
+    comboEffectsEnabled: true
   })
 
   // 计算属性

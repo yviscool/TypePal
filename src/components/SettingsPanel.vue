@@ -92,6 +92,16 @@
                     </div>
                     <span class="text-sm text-gray-800 dark:text-white/90 group-hover:text-gray-900 dark:group-hover:text-white transition-colors duration-200">自动发音提示</span>
                   </label>
+                  <label class="flex items-center gap-3 cursor-pointer group">
+                    <div class="relative">
+                      <input v-model="localSettings.comboEffectsEnabled" type="checkbox"
+                        class="w-5 h-5 rounded-lg border-2 border-white/40 bg-white/20 checked:bg-gradient-to-br checked:from-cyber-pink checked:to-cyber-pink/80 checked:border-cyber-pink transition-all duration-300 focus:ring-2 focus:ring-cyber-pink/20">
+                      <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div class="i-ph-check text-white text-xs opacity-0 group-has-[:checked]:opacity-100 transition-opacity duration-200"></div>
+                      </div>
+                    </div>
+                    <span class="text-sm text-gray-800 dark:text-white/90 group-hover:text-gray-900 dark:group-hover:text-white transition-colors duration-200">启用华丽连击特效</span>
+                  </label>
                 </div>
               </div>
             </div>
