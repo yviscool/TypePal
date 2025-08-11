@@ -98,7 +98,7 @@
                                     <option value="strict">⚡ 严格模式 (一错重来)</option>
                                 </select>
                             </div>
-                            
+
                             <label class="flex items-center gap-3 text-sm cursor-pointer group relative">
                                 <div class="relative">
                                     <input v-model="settings.loopOnError" type="checkbox"
@@ -121,7 +121,7 @@
                                     开启后，若单词拼写错误，需重新完整输入该单词方可进入下一个
                                 </div>
                             </label>
-                            
+
                             <label class="flex items-center gap-3 text-sm cursor-pointer group relative">
                                 <div class="relative">
                                     <input v-model="settings.soundEnabled" type="checkbox"
@@ -230,6 +230,89 @@
 
                 <!-- 当前单词显示 -->
                 <div class="mb-16 relative">
+                    <!-- DMC风格连击显示 - 浮动在单词左上角 -->
+                    <div v-if="comboCount >= 3" class="absolute top-0 left-0 transform -translate-x-4 -translate-y-16 z-20">
+                        <div class="relative select-none" :class="{
+                            'animate-dmc-impact': showCombo
+                        }">
+                            <!-- COMBO 标签 -->
+                            <div class="text-center mb-1">
+                                <div class="text-sm font-black tracking-[0.2em] opacity-80 transform transition-all duration-300"
+                                    :class="{
+                                        'text-orange-400 animate-dmc-label': comboCount < 10,
+                                        'text-yellow-400 animate-dmc-label-gold': comboCount >= 10 && comboCount < 25,
+                                        'text-purple-400 animate-dmc-label-legendary': comboCount >= 25
+                                    }">
+                                    COMBO
+                                </div>
+                            </div>
+
+                            <!-- 连击数字 - 核心显示 -->
+                            <div class="relative flex justify-center">
+                                <!-- 主数字 -->
+                                <div class="relative">
+                                    <div class="font-black tracking-tight transform transition-all duration-200"
+                                        :class="{
+                                            'text-4xl text-orange-300 animate-dmc-number': comboCount < 10,
+                                            'text-5xl text-yellow-300 animate-dmc-number-gold': comboCount >= 10 && comboCount < 25,
+                                            'text-6xl text-purple-300 animate-dmc-number-legendary': comboCount >= 25,
+                                            'animate-dmc-shake': showCombo
+                                        }">
+                                        {{ comboCount }}
+                                    </div>
+
+                                    <!-- 数字阴影层 -->
+                                    <div class="absolute inset-0 font-black tracking-tight blur-sm opacity-40 -z-10"
+                                        :class="{
+                                            'text-4xl text-orange-500': comboCount < 10,
+                                            'text-5xl text-yellow-500': comboCount >= 10 && comboCount < 25,
+                                            'text-6xl text-purple-500': comboCount >= 25
+                                        }">
+                                        {{ comboCount }}
+                                    </div>
+
+                                    <!-- 外发光效果 -->
+                                    <div class="absolute inset-0 font-black tracking-tight blur-lg opacity-20 -z-20"
+                                        :class="{
+                                            'text-4xl text-orange-400': comboCount < 10,
+                                            'text-5xl text-yellow-400': comboCount >= 10 && comboCount < 25,
+                                            'text-6xl text-purple-400': comboCount >= 25
+                                        }">
+                                        {{ comboCount }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 等级指示器 -->
+                            <div class="text-center mt-1">
+                                <div class="text-xs font-bold tracking-wider opacity-70 transform transition-all duration-300"
+                                    :class="{
+                                        'text-orange-300': comboCount < 10,
+                                        'text-yellow-300 animate-pulse': comboCount >= 10 && comboCount < 25,
+                                        'text-purple-300 animate-dmc-legendary-text': comboCount >= 25
+                                    }">
+                                    {{ comboCount >= 25 ? 'LEGENDARY' : comboCount >= 10 ? 'STYLISH' : 'GOOD' }}
+                                </div>
+                            </div>
+
+                            <!-- 冲击波效果 -->
+                            <div v-if="showCombo" class="absolute inset-0 pointer-events-none">
+                                <div class="absolute inset-0 rounded-full border-2 animate-dmc-shockwave"
+                                    :class="{
+                                        'border-orange-400/30': comboCount < 10,
+                                        'border-yellow-400/30': comboCount >= 10 && comboCount < 25,
+                                        'border-purple-400/30': comboCount >= 25
+                                    }"></div>
+                                <div class="absolute inset-0 rounded-full border animate-dmc-shockwave-delayed"
+                                    :class="{
+                                        'border-orange-300/20': comboCount < 10,
+                                        'border-yellow-300/20': comboCount >= 10 && comboCount < 25,
+                                        'border-purple-300/20': comboCount >= 25
+                                    }"></div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- 单词显示区域 - 完全居中 -->
                     <div class="flex justify-center mb-8">
                         <div class="text-7xl md:text-8xl font-bold tracking-wider select-none flex items-center relative"
@@ -264,21 +347,6 @@
                 <input ref="inputRef" v-model="userInput" type="text" class="fixed opacity-0 pointer-events-none"
                     style="left: -9999px; top: -9999px;" @input="onInput" @keydown="onKeydown" :disabled="isPaused"
                     autocomplete="off" spellcheck="false">
-
-                <!-- 连击显示 -->
-                <div v-if="comboCount >= 3" 
-                    class="mb-6 flex justify-center">
-                    <div class="px-6 py-3 bg-gradient-to-r from-orange-500/20 to-red-500/20 backdrop-blur-sm border border-orange-500/40 rounded-2xl shadow-lg"
-                        :class="{ 'animate-combo-pulse': showCombo }">
-                        <div class="flex items-center gap-3">
-                            <div class="text-2xl">🔥</div>
-                            <div>
-                                <div class="text-lg font-bold text-orange-400">Combo x{{ comboCount }}</div>
-                                <div class="text-xs text-orange-300/80">连击中！保持节奏</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
 
                 <!-- 实时统计信息 -->
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
@@ -573,7 +641,7 @@ const onInput = () => {
             if (userInput.value.length === currentWord.value.word.length) {
                 // 单词完成，显示成功消息并自动跳转
                 successMessage.value = '完美！'
-                
+
                 // 增加连击
                 incrementCombo()
 
@@ -725,17 +793,17 @@ const previousWord = () => {
 const incrementCombo = () => {
     comboCount.value++
     showCombo.value = true
-    
+
     // 清除之前的超时
     if (comboTimeout.value) {
         clearTimeout(comboTimeout.value)
     }
-    
+
     // 设置动画效果
     setTimeout(() => {
         showCombo.value = false
     }, 500)
-    
+
     // 特殊连击里程碑提示
     if (comboCount.value === 10) {
         successMessage.value = '🎉 连击 x10！状态火热！'
@@ -756,7 +824,7 @@ const resetCombo = () => {
     }
     comboCount.value = 0
     showCombo.value = false
-    
+
     if (comboTimeout.value) {
         clearTimeout(comboTimeout.value)
         comboTimeout.value = null
@@ -883,11 +951,255 @@ onUnmounted(() => {
 }
 
 @keyframes combo-pulse {
-    0%, 100% {
+
+    0%,
+    100% {
         transform: scale(1);
     }
+
     50% {
         transform: scale(1.05);
+    }
+}
+
+/* DMC风格连击动画 - 增强震撼感 */
+@keyframes dmc-impact {
+    0% {
+        transform: scale(1) rotate(0deg);
+    }
+    15% {
+        transform: scale(1.3) rotate(-2deg);
+    }
+    30% {
+        transform: scale(0.9) rotate(1deg);
+    }
+    45% {
+        transform: scale(1.15) rotate(-1deg);
+    }
+    60% {
+        transform: scale(0.95) rotate(0.5deg);
+    }
+    80% {
+        transform: scale(1.05) rotate(-0.5deg);
+    }
+    100% {
+        transform: scale(1) rotate(0deg);
+    }
+}
+
+@keyframes dmc-label {
+    0%, 100% {
+        opacity: 0.8;
+        transform: translateY(0) scale(1);
+        text-shadow: 0 0 15px rgba(255, 165, 0, 0.4);
+    }
+    50% {
+        opacity: 1;
+        transform: translateY(-4px) scale(1.1);
+        text-shadow: 0 0 25px rgba(255, 165, 0, 0.8);
+    }
+}
+
+@keyframes dmc-label-gold {
+    0%, 100% {
+        opacity: 0.9;
+        transform: translateY(0) scale(1) rotateX(0deg);
+        text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+    }
+    25% {
+        opacity: 1;
+        transform: translateY(-3px) scale(1.08) rotateX(10deg);
+        text-shadow: 0 0 30px rgba(255, 215, 0, 0.8);
+    }
+    75% {
+        opacity: 1;
+        transform: translateY(-6px) scale(1.12) rotateX(-5deg);
+        text-shadow: 0 0 35px rgba(255, 215, 0, 0.9);
+    }
+}
+
+@keyframes dmc-label-legendary {
+    0%, 100% {
+        opacity: 0.9;
+        transform: translateY(0) scale(1) rotateY(0deg);
+        text-shadow: 0 0 25px rgba(147, 51, 234, 0.6), 0 0 40px rgba(236, 72, 153, 0.3);
+    }
+    20% {
+        opacity: 1;
+        transform: translateY(-4px) scale(1.1) rotateY(15deg);
+        text-shadow: 0 0 35px rgba(147, 51, 234, 0.9), 0 0 50px rgba(236, 72, 153, 0.5);
+    }
+    40% {
+        opacity: 1;
+        transform: translateY(-8px) scale(1.15) rotateY(-10deg);
+        text-shadow: 0 0 40px rgba(236, 72, 153, 0.8), 0 0 60px rgba(147, 51, 234, 0.6);
+    }
+    60% {
+        opacity: 1;
+        transform: translateY(-6px) scale(1.12) rotateY(8deg);
+        text-shadow: 0 0 45px rgba(147, 51, 234, 1), 0 0 70px rgba(236, 72, 153, 0.7);
+    }
+    80% {
+        opacity: 1;
+        transform: translateY(-3px) scale(1.08) rotateY(-5deg);
+        text-shadow: 0 0 35px rgba(236, 72, 153, 0.9), 0 0 55px rgba(147, 51, 234, 0.8);
+    }
+}
+
+@keyframes dmc-number {
+    0%, 100% {
+        transform: scale(1) rotateZ(0deg);
+        text-shadow: 0 0 30px rgba(255, 165, 0, 0.6), 0 0 50px rgba(255, 165, 0, 0.3);
+    }
+    25% {
+        transform: scale(1.08) rotateZ(2deg);
+        text-shadow: 0 0 40px rgba(255, 165, 0, 0.8), 0 0 60px rgba(255, 165, 0, 0.4);
+    }
+    75% {
+        transform: scale(1.05) rotateZ(-1deg);
+        text-shadow: 0 0 35px rgba(255, 165, 0, 0.7), 0 0 55px rgba(255, 165, 0, 0.35);
+    }
+}
+
+@keyframes dmc-number-gold {
+    0%, 100% {
+        transform: scale(1) rotateX(0deg) rotateY(0deg);
+        text-shadow: 0 0 35px rgba(255, 215, 0, 0.7), 0 0 60px rgba(255, 215, 0, 0.4);
+    }
+    20% {
+        transform: scale(1.1) rotateX(10deg) rotateY(5deg);
+        text-shadow: 0 0 45px rgba(255, 215, 0, 0.9), 0 0 70px rgba(255, 215, 0, 0.5);
+    }
+    40% {
+        transform: scale(1.15) rotateX(-5deg) rotateY(-8deg);
+        text-shadow: 0 0 50px rgba(255, 215, 0, 1), 0 0 80px rgba(255, 215, 0, 0.6);
+    }
+    60% {
+        transform: scale(1.12) rotateX(8deg) rotateY(3deg);
+        text-shadow: 0 0 48px rgba(255, 215, 0, 0.95), 0 0 75px rgba(255, 215, 0, 0.55);
+    }
+    80% {
+        transform: scale(1.06) rotateX(-3deg) rotateY(-2deg);
+        text-shadow: 0 0 42px rgba(255, 215, 0, 0.85), 0 0 65px rgba(255, 215, 0, 0.45);
+    }
+}
+
+@keyframes dmc-number-legendary {
+    0%, 100% {
+        transform: scale(1) rotateX(0deg) rotateY(0deg) rotateZ(0deg);
+        text-shadow: 0 0 40px rgba(147, 51, 234, 0.8), 0 0 70px rgba(236, 72, 153, 0.5), 0 0 100px rgba(147, 51, 234, 0.3);
+    }
+    16% {
+        transform: scale(1.12) rotateX(15deg) rotateY(10deg) rotateZ(3deg);
+        text-shadow: 0 0 50px rgba(147, 51, 234, 1), 0 0 80px rgba(236, 72, 153, 0.7), 0 0 120px rgba(147, 51, 234, 0.4);
+    }
+    33% {
+        transform: scale(1.2) rotateX(-10deg) rotateY(-15deg) rotateZ(-2deg);
+        text-shadow: 0 0 60px rgba(236, 72, 153, 0.9), 0 0 90px rgba(147, 51, 234, 0.8), 0 0 130px rgba(236, 72, 153, 0.5);
+    }
+    50% {
+        transform: scale(1.25) rotateX(12deg) rotateY(8deg) rotateZ(4deg);
+        text-shadow: 0 0 70px rgba(147, 51, 234, 1), 0 0 100px rgba(236, 72, 153, 0.9), 0 0 140px rgba(147, 51, 234, 0.6);
+    }
+    66% {
+        transform: scale(1.18) rotateX(-8deg) rotateY(-12deg) rotateZ(-3deg);
+        text-shadow: 0 0 65px rgba(236, 72, 153, 1), 0 0 95px rgba(147, 51, 234, 0.85), 0 0 135px rgba(236, 72, 153, 0.55);
+    }
+    83% {
+        transform: scale(1.1) rotateX(6deg) rotateY(4deg) rotateZ(1deg);
+        text-shadow: 0 0 55px rgba(147, 51, 234, 0.95), 0 0 85px rgba(236, 72, 153, 0.75), 0 0 125px rgba(147, 51, 234, 0.45);
+    }
+}
+
+@keyframes dmc-shake {
+    0%, 100% {
+        transform: translateX(0) translateY(0) rotate(0deg);
+    }
+    10% {
+        transform: translateX(-3px) translateY(-2px) rotate(-1deg);
+    }
+    20% {
+        transform: translateX(3px) translateY(2px) rotate(1deg);
+    }
+    30% {
+        transform: translateX(-2px) translateY(-3px) rotate(-0.5deg);
+    }
+    40% {
+        transform: translateX(2px) translateY(3px) rotate(0.5deg);
+    }
+    50% {
+        transform: translateX(-1px) translateY(-1px) rotate(-0.3deg);
+    }
+    60% {
+        transform: translateX(1px) translateY(1px) rotate(0.3deg);
+    }
+    70% {
+        transform: translateX(-1px) translateY(0px) rotate(-0.2deg);
+    }
+    80% {
+        transform: translateX(1px) translateY(0px) rotate(0.2deg);
+    }
+    90% {
+        transform: translateX(0px) translateY(-1px) rotate(-0.1deg);
+    }
+}
+
+@keyframes dmc-legendary-text {
+    0%, 100% {
+        opacity: 0.7;
+        transform: scale(1);
+        text-shadow: 0 0 15px rgba(147, 51, 234, 0.4), 0 0 30px rgba(236, 72, 153, 0.2);
+    }
+    25% {
+        opacity: 0.9;
+        transform: scale(1.05);
+        text-shadow: 0 0 20px rgba(236, 72, 153, 0.6), 0 0 40px rgba(147, 51, 234, 0.3);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.1);
+        text-shadow: 0 0 25px rgba(147, 51, 234, 0.8), 0 0 50px rgba(236, 72, 153, 0.5);
+    }
+    75% {
+        opacity: 0.95;
+        transform: scale(1.08);
+        text-shadow: 0 0 22px rgba(236, 72, 153, 0.7), 0 0 45px rgba(147, 51, 234, 0.4);
+    }
+}
+
+@keyframes dmc-shockwave {
+    0% {
+        transform: scale(0.8);
+        opacity: 0.8;
+        border-width: 3px;
+    }
+    50% {
+        transform: scale(2);
+        opacity: 0.4;
+        border-width: 2px;
+    }
+    100% {
+        transform: scale(4);
+        opacity: 0;
+        border-width: 1px;
+    }
+}
+
+@keyframes dmc-shockwave-delayed {
+    0% {
+        transform: scale(0.9);
+        opacity: 0.6;
+        border-width: 2px;
+    }
+    50% {
+        transform: scale(2.5);
+        opacity: 0.3;
+        border-width: 1px;
+    }
+    100% {
+        transform: scale(5);
+        opacity: 0;
+        border-width: 0px;
     }
 }
 
@@ -901,8 +1213,48 @@ onUnmounted(() => {
     text-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
 }
 
-.animate-combo-pulse {
-    animation: combo-pulse 0.5s ease-in-out;
+.animate-dmc-impact {
+    animation: dmc-impact 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.animate-dmc-label {
+    animation: dmc-label 2s ease-in-out infinite;
+}
+
+.animate-dmc-label-gold {
+    animation: dmc-label-gold 1.8s ease-in-out infinite;
+}
+
+.animate-dmc-label-legendary {
+    animation: dmc-label-legendary 2.5s ease-in-out infinite;
+}
+
+.animate-dmc-number {
+    animation: dmc-number 2s ease-in-out infinite;
+}
+
+.animate-dmc-number-gold {
+    animation: dmc-number-gold 1.8s ease-in-out infinite;
+}
+
+.animate-dmc-number-legendary {
+    animation: dmc-number-legendary 2.2s ease-in-out infinite;
+}
+
+.animate-dmc-shake {
+    animation: dmc-shake 0.2s ease-in-out;
+}
+
+.animate-dmc-legendary-text {
+    animation: dmc-legendary-text 1.5s ease-in-out infinite;
+}
+
+.animate-dmc-shockwave {
+    animation: dmc-shockwave 0.6s ease-out;
+}
+
+.animate-dmc-shockwave-delayed {
+    animation: dmc-shockwave-delayed 0.8s ease-out 0.1s;
 }
 
 input:disabled {

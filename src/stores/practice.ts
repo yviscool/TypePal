@@ -25,6 +25,7 @@ export interface PracticeSettings {
   loopOnError: boolean
   dictationMode: boolean
   soundEnabled: boolean
+  practiceMode: 'normal' | 'strict'
 }
 
 export const usePracticeStore = defineStore('practice', () => {
@@ -49,7 +50,8 @@ export const usePracticeStore = defineStore('practice', () => {
     showTranslation: true,
     loopOnError: false,
     dictationMode: false,
-    soundEnabled: true
+    soundEnabled: true,
+    practiceMode: 'normal'
   })
 
   // 计算属性
