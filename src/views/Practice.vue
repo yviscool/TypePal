@@ -40,10 +40,8 @@
                     </button>
 
                     <!-- 暂停按钮 -->
-                    <button @click="togglePause"
-                        class="p-2 rounded-lg hover:bg-white/10 transition-colors duration-200"
-                        :class="{ 'bg-white/10': isPaused }" 
-                        :title="isPaused ? '继续练习 (快捷键: Esc)' : '暂停练习 (快捷键: Esc)'">
+                    <button @click="togglePause" class="p-2 rounded-lg hover:bg-white/10 transition-colors duration-200"
+                        :class="{ 'bg-white/10': isPaused }" :title="isPaused ? '继续练习 (快捷键: Esc)' : '暂停练习 (快捷键: Esc)'">
                         <div class="i-ph-pause text-xl" v-if="!isPaused"></div>
                         <div class="i-ph-play text-xl" v-else></div>
                     </button>
@@ -342,7 +340,7 @@
 
 
         <!-- 主练习区域 -->
-        <div class="max-w-4xl mx-auto mt-20 relative">
+        <div class="max-w-4xl mx-auto mt-35 relative">
             <div v-if="!isCompleted && currentWord" class="text-center">
                 <!-- 浮动导航按钮 - 上一个单词 (左侧) -->
                 <div class="fixed left-4 md:left-8 top transform -translate-y-1/2 z-10">
@@ -393,7 +391,7 @@
                         }">
                             <!-- COMBO 标签 -->
                             <div class="text-center mb-1">
-                                <div class="text-sm font-black tracking-[0.2em] opacity-80 transform transition-all duration-300"
+                                <div class="text-2xl font-black tracking-[0.2em] opacity-80 transform transition-all duration-300"
                                     :class="{
                                         'text-orange-400 animate-dmc-label': comboCount < 10,
                                         'text-yellow-400 animate-dmc-label-gold': comboCount >= 10 && comboCount < 25,
@@ -440,7 +438,7 @@
 
                             <!-- 等级指示器 -->
                             <div class="text-center mt-1">
-                                <div class="text-xs font-bold tracking-wider opacity-70 transform transition-all duration-300"
+                                <div class="text-xl font-bold tracking-wider opacity-70 transform transition-all duration-300"
                                     :class="{
                                         'text-orange-300': comboCount < 10,
                                         'text-yellow-300 animate-pulse': comboCount >= 10 && comboCount < 25,
@@ -598,8 +596,14 @@
                         <div class="i-ph-trophy text-white text-4xl"></div>
                     </div>
 
-                    <h2 class="text-3xl font-bold mb-4">章节完成！</h2>
-                    <p class="text-lg opacity-80 mb-8">太棒了！你和键盘简直是天作之合</p>
+                    <h2 class="text-3xl font-bold mb-4">
+                        {{ currentChapter >= availableChapters.length - 1 ? '全部完成！' : '章节完成！' }}
+                    </h2>
+                    <p class="text-lg opacity-80 mb-8">
+                        {{ currentChapter >= availableChapters.length - 1 
+                            ? '恭喜！你已经完成了所有章节的练习' 
+                            : '太棒了！你和键盘简直是天作之合' }}
+                    </p>
                 </div>
 
                 <!-- 统计信息 -->
@@ -627,15 +631,27 @@
 
                 <!-- 操作按钮 -->
                 <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                    <button @click="nextChapter"
-                        class="px-8 py-4 bg-gradient-to-r from-coral-500 to-coral-600 text-white rounded-2xl font-medium text-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300">
-                        再来一轮，状态正佳！
-                    </button>
-
                     <button @click="startDictation"
                         class="px-8 py-4 bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl font-medium text-lg hover:bg-white/20 transition-all duration-300">
                         开启默写，检验成果！
                     </button>
+
+                    <button @click="nextChapter"
+                        class="px-8 py-4 bg-gradient-to-r from-coral-500 to-coral-600 text-white rounded-2xl font-medium text-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 relative">
+                        {{ currentChapter >= availableChapters.length - 1 ? '重新开始第一章' : '再来一轮，状态正佳！' }}
+                        <!-- Enter键提示 -->
+                        <div class="absolute -top-2 -right-2 px-2 py-1 bg-white/20 backdrop-blur-sm rounded-lg text-xs font-mono border border-white/30">
+                            Enter
+                        </div>
+                    </button>
+                </div>
+
+                <!-- 快捷键提示 -->
+                <div class="mt-6 text-center">
+                    <p class="text-sm opacity-60">
+                        💡 按 <kbd class="px-2 py-1 bg-white/20 rounded border text-xs font-mono mx-1">Enter</kbd> 
+                        {{ currentChapter >= availableChapters.length - 1 ? '重新开始' : '进入下一章' }}
+                    </p>
                 </div>
             </div>
 
@@ -858,6 +874,21 @@ const onKeydown = (event: KeyboardEvent) => {
     // 阻止某些默认行为
     if (event.key === 'Tab' || event.key === 'Enter') {
         event.preventDefault()
+    }
+
+    // 处理回车键 - 章节完成时自动进入下一轮
+    if (event.key === 'Enter' && isCompleted.value) {
+        const isLastChapter = currentChapter.value >= availableChapters.value.length - 1
+        if (isLastChapter) {
+            // 最终章完成，可以选择重新开始或进入默写模式
+            // 默认行为：重新开始第一章
+            currentChapter.value = 0
+            practiceStore.resetChapter()
+        } else {
+            // 自动进入下一章
+            nextChapter()
+        }
+        return
     }
 
     // 处理退格键
@@ -1094,6 +1125,24 @@ const handleKeydown = (event: KeyboardEvent) => {
         event.preventDefault()
         return
     }
+
+    // ==================== 新增代码段 开始 ====================
+    // Enter键 - 在章节完成时进入下一章
+    if (event.key === 'Enter' && isCompleted.value) {
+        event.preventDefault(); // 阻止默认行为
+        
+        const isLastChapter = currentChapter.value >= availableChapters.value.length - 1;
+        if (isLastChapter) {
+            // 如果是最后一章，则重置到第一章
+            currentChapter.value = 0;
+            practiceStore.resetChapter();
+        } else {
+            // 否则，进入下一章
+            nextChapter();
+        }
+        return; // 处理完毕，直接返回
+    }
+    // ==================== 新增代码段 结束 ====================
 
     // Tab键 - 跳过当前单词（替代空格键，避免与浏览器冲突）
     if (event.key === 'Tab' && !showSettings.value && !isPaused.value) {
