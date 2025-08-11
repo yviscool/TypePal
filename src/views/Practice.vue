@@ -340,7 +340,7 @@
 
 
         <!-- 主练习区域 -->
-        <div class="max-w-4xl mx-auto mt-35 relative">
+        <div class="max-w-4xl mx-auto mt-30 relative">
             <div v-if="!isCompleted && currentWord" class="text-center">
                 <!-- 浮动导航按钮 - 上一个单词 (左侧) -->
                 <div class="fixed left-4 md:left-8 top transform -translate-y-1/2 z-10">
@@ -493,6 +493,31 @@
                         class="text-2xl opacity-80 font-medium mb-4 max-w-2xl mx-auto leading-relaxed">
                         {{ currentWord.translation }}
                     </div>
+
+                    <!-- 单词循环进度指示器 -->
+                    <div v-if="settings.wordLoopCount !== '1'" class="mb-6 flex justify-center">
+                        <div class="px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl">
+                            <div class="flex items-center gap-3">
+                                <div class="text-sm opacity-60 font-medium">循环进度</div>
+                                <div class="flex items-center gap-2">
+                                    <div v-if="!currentWordLoopProgress.isInfinite" class="flex items-center gap-1">
+                                        <div v-for="i in currentWordLoopProgress.required" :key="i"
+                                            class="w-2 h-2 rounded-full transition-all duration-300"
+                                            :class="i <= currentWordLoopProgress.current ? 'bg-coral-500 shadow-sm' : 'bg-white/30'">
+                                        </div>
+                                    </div>
+                                    <div class="text-sm font-mono" :class="{
+                                        'text-coral-400': currentWordLoopProgress.current > 0,
+                                        'text-white/60': currentWordLoopProgress.current === 0
+                                    }">
+                                        {{ currentWordLoopProgress.isInfinite ? 
+                                            `${currentWordLoopProgress.current} / ∞` : 
+                                            `${currentWordLoopProgress.current} / ${currentWordLoopProgress.required}` }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <!-- 隐藏的输入框用于捕获键盘输入 -->
                 <input ref="inputRef" v-model="userInput" type="text" class="fixed opacity-0 pointer-events-none"
@@ -539,14 +564,16 @@
                     <div v-if="errorMessage"
                         class="text-red-800 font-semibold px-6 py-3 bg-gradient-to-r from-red-100/90 to-red-200/95 backdrop-blur-md rounded-xl border border-red-300/60 shadow-lg transition-all duration-300 ring-1 ring-red-300/40">
                         <div class="flex items-center gap-2">
-                            <div class="w-2 h-2 bg-red-600 rounded-full animate-pulse shadow-sm shadow-red-500/50"></div>
+                            <div class="w-2 h-2 bg-red-600 rounded-full animate-pulse shadow-sm shadow-red-500/50">
+                            </div>
                             <span class="text-sm font-medium text-red-900 drop-shadow-sm">{{ errorMessage }}</span>
                         </div>
                     </div>
                     <div v-else-if="successMessage"
                         class="text-green-800 font-semibold px-6 py-3 bg-gradient-to-r from-green-100/90 to-emerald-100/95 backdrop-blur-md rounded-xl border border-green-300/60 shadow-lg transition-all duration-300 ring-1 ring-green-300/40">
                         <div class="flex items-center gap-2">
-                            <div class="w-2 h-2 bg-green-600 rounded-full animate-pulse shadow-sm shadow-green-500/50"></div>
+                            <div class="w-2 h-2 bg-green-600 rounded-full animate-pulse shadow-sm shadow-green-500/50">
+                            </div>
                             <span class="text-sm font-medium text-green-900 drop-shadow-sm">{{ successMessage }}</span>
                         </div>
                     </div>
@@ -615,8 +642,8 @@
                     </h2>
                     <p class="text-lg opacity-80 mb-8">
                         {{ currentChapter >= availableChapters.length - 1
-                            ? '恭喜！你已经完成了所有章节的练习'
-                            : '太棒了！你和键盘简直是天作之合' }}
+                        ? '恭喜！你已经完成了所有章节的练习'
+                        : '太棒了！你和键盘简直是天作之合' }}
                     </p>
                 </div>
 
@@ -741,7 +768,8 @@ const {
     currentWord,
     progress,
     startTime,
-    endTime
+    endTime,
+    currentWordLoopProgress
 } = storeToRefs(practiceStore)
 
 // 计算属性
@@ -849,16 +877,38 @@ const onInput = () => {
         } else {
             // 正确输入，检查是否完成单词
             if (userInput.value.length === currentWord.value.word.length) {
-                // 单词完成，显示成功消息并自动跳转
-                successMessage.value = '完美！'
+                // 验证整个单词是否完全正确
+                const isWordComplete = userInput.value === currentWord.value.word
 
-                // 增加连击
-                incrementCombo()
+                if (isWordComplete) {
+                    // 单词完成，显示成功消息并自动跳转
+                    successMessage.value = '完美！'
 
-                setTimeout(() => {
-                    clearMessages()
-                    completeCurrentWord()
-                }, 250)
+                    // 增加连击
+                    incrementCombo()
+
+                    setTimeout(() => {
+                        clearMessages()
+                        completeCurrentWord()
+                    }, 250)
+                } else {
+                    // 单词长度匹配但内容不完全正确，根据模式处理
+                    if (settings.value.practiceMode === 'normal') {
+                        errorMessage.value = '单词不完全正确，请检查并修正'
+                        setTimeout(clearMessages, 1500)
+                        resetCombo()
+                    } else {
+                        // 严格模式和硬核模式下重新开始
+                        errorMessage.value = settings.value.practiceMode === 'hardcore' ? '💥 硬核模式：全部重来！' : '⚡ 严格模式：从头开始！'
+                        setTimeout(clearMessages, 800)
+                        if (settings.value.practiceMode === 'hardcore') {
+                            practiceStore.resetChapter()
+                        } else {
+                            userInput.value = ''
+                        }
+                        resetCombo()
+                    }
+                }
             }
         }
     }
@@ -871,10 +921,10 @@ const completeCurrentWord = () => {
     totalCount.value++
     correctCount.value++
 
-    // 移动到下一个单词
+    // 使用 store 的 nextWord 方法，它会处理循环逻辑
     practiceStore.nextWord()
 
-    // 自动播放下一个单词的发音
+    // 自动播放当前单词的发音（可能是同一个单词的下一次循环，也可能是下一个单词）
     if (settings.value.soundEnabled && currentWord.value) {
         setTimeout(() => {
             playPronunciation()

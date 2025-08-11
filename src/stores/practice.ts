@@ -39,6 +39,9 @@ export const usePracticeStore = defineStore('practice', () => {
   const startTime = ref<number | null>(null)
   const endTime = ref<number | null>(null)
   
+  // 单词循环计数状态
+  const wordCompletionCounts = ref<Map<number, number>>(new Map())
+  
   // 统计数据
   const correctCount = ref(0)
   const totalCount = ref(0)
@@ -75,6 +78,16 @@ export const usePracticeStore = defineStore('practice', () => {
     return (currentWordIndex.value / words.length) * 100
   })
 
+  const currentWordLoopProgress = computed(() => {
+    const currentCount = wordCompletionCounts.value.get(currentWordIndex.value) || 0
+    const requiredCount = settings.value.wordLoopCount === 'infinite' ? Infinity : parseInt(settings.value.wordLoopCount)
+    return {
+      current: currentCount,
+      required: requiredCount,
+      isInfinite: settings.value.wordLoopCount === 'infinite'
+    }
+  })
+
   // 方法
   const setDictionary = (dictionary: Dictionary) => {
     currentDictionary.value = dictionary
@@ -89,6 +102,7 @@ export const usePracticeStore = defineStore('practice', () => {
     totalCount.value = 0
     startTime.value = null
     endTime.value = null
+    wordCompletionCounts.value.clear()
   }
 
   const nextChapter = () => {
@@ -126,6 +140,23 @@ export const usePracticeStore = defineStore('practice', () => {
 
   const nextWord = () => {
     const words = currentChapterWords.value
+    const currentIndex = currentWordIndex.value
+    
+    // 获取当前单词的完成次数
+    const currentCount = wordCompletionCounts.value.get(currentIndex) || 0
+    const requiredCount = settings.value.wordLoopCount === 'infinite' ? Infinity : parseInt(settings.value.wordLoopCount)
+    
+    // 增加当前单词的完成次数
+    wordCompletionCounts.value.set(currentIndex, currentCount + 1)
+    
+    // 检查是否需要继续循环当前单词
+    if (currentCount + 1 < requiredCount) {
+      // 需要继续练习当前单词，只清空输入
+      userInput.value = ''
+      return
+    }
+    
+    // 当前单词已完成所需次数，移动到下一个单词
     if (currentWordIndex.value < words.length - 1) {
       currentWordIndex.value++
       userInput.value = ''
@@ -231,6 +262,7 @@ export const usePracticeStore = defineStore('practice', () => {
     currentChapterWords,
     currentWord,
     progress,
+    currentWordLoopProgress,
     
     // 方法
     setDictionary,
