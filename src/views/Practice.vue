@@ -510,8 +510,8 @@
                                         'text-coral-400': currentWordLoopProgress.current > 0,
                                         'text-white/60': currentWordLoopProgress.current === 0
                                     }">
-                                        {{ currentWordLoopProgress.isInfinite ? 
-                                            `${currentWordLoopProgress.current} / ∞` : 
+                                        {{ currentWordLoopProgress.isInfinite ?
+                                            `${currentWordLoopProgress.current} / ∞` :
                                             `${currentWordLoopProgress.current} / ${currentWordLoopProgress.required}` }}
                                     </div>
                                 </div>
@@ -601,9 +601,32 @@
                     </span>
                     <div class="flex items-center justify-center gap-2 max-w-full overflow-x-auto px-4">
                         <div v-for="(_, index) in currentChapterWords" :key="index"
-                            class="w-3 h-3 rounded-full transition-all duration-300 ease-out flex-shrink-0"
-                            :class="index === currentWordIndex ? 'bg-coral-500 scale-150 shadow-lg shadow-coral-500/50 ring-2 ring-coral-500/30' :
-                                index < currentWordIndex ? 'bg-green-400 shadow-sm scale-110' : 'bg-white/20 hover:bg-white/30'">
+                            class="w-3 h-3 rounded-full transition-all duration-300 ease-out flex-shrink-0 relative group"
+                            :class="getWordProgressClass(index)" :title="getWordStatusTooltip(index)">
+                        </div>
+                    </div>
+
+                    <!-- 状态图例 -->
+                    <div class="flex items-center justify-center gap-4 text-xs opacity-60 mt-2">
+                        <div class="flex items-center gap-1">
+                            <div class="w-2 h-2 rounded-full bg-green-400"></div>
+                            <span>已完成</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <div class="w-2 h-2 rounded-full bg-coral-500"></div>
+                            <span>当前</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <div class="w-2 h-2 rounded-full bg-yellow-400"></div>
+                            <span>已跳过</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <div class="w-2 h-2 rounded-full bg-red-400"></div>
+                            <span>有错误</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <div class="w-2 h-2 rounded-full bg-white/20"></div>
+                            <span>未练习</span>
                         </div>
                     </div>
                 </div>
@@ -642,8 +665,8 @@
                     </h2>
                     <p class="text-lg opacity-80 mb-8">
                         {{ currentChapter >= availableChapters.length - 1
-                        ? '恭喜！你已经完成了所有章节的练习'
-                        : '太棒了！你和键盘简直是天作之合' }}
+                            ? '恭喜！你已经完成了所有章节的练习'
+                            : '太棒了！你和键盘简直是天作之合' }}
                     </p>
                 </div>
 
@@ -769,7 +792,8 @@ const {
     progress,
     startTime,
     endTime,
-    currentWordLoopProgress
+    currentWordLoopProgress,
+    getWordStatus
 } = storeToRefs(practiceStore)
 
 // 计算属性
@@ -799,6 +823,49 @@ const getCharClass = (index: number) => {
         return 'text-white bg-green-500 rounded-md px-1 shadow-lg'
     } else {
         return 'text-white bg-red-500 rounded-md px-1 animate-shake'
+    }
+}
+
+// 获取单词进度指示器的样式类
+const getWordProgressClass = (index: number) => {
+    const status = getWordStatus.value(index)
+
+    switch (status) {
+        case 'current':
+            return 'bg-coral-500 scale-150 shadow-lg shadow-coral-500/50 ring-2 ring-coral-500/30'
+        case 'completed':
+            return 'bg-green-400 shadow-sm scale-110 hover:scale-125'
+        case 'skipped':
+            return 'bg-yellow-400 shadow-sm scale-110 hover:scale-125'
+        case 'error':
+            return 'bg-red-400 shadow-sm scale-110 hover:scale-125'
+        case 'untouched':
+        default:
+            return 'bg-white/20 hover:bg-white/30'
+    }
+}
+
+// 获取单词状态的工具提示
+const getWordStatusTooltip = (index: number) => {
+    const status = getWordStatus.value(index)
+    const word = currentChapterWords.value[index]
+
+    if (!word) return ''
+
+    const baseInfo = `${word.word} - ${word.translation}`
+
+    switch (status) {
+        case 'current':
+            return `正在练习: ${baseInfo}`
+        case 'completed':
+            return `已完成: ${baseInfo}`
+        case 'skipped':
+            return `已跳过: ${baseInfo}`
+        case 'error':
+            return `有错误: ${baseInfo}`
+        case 'untouched':
+        default:
+            return `未练习: ${baseInfo}`
     }
 }
 
@@ -856,6 +923,9 @@ const onInput = () => {
 
         if (currentChar !== expectedChar) {
             // 根据练习模式处理错误
+            // 标记当前单词为错误状态
+            practiceStore.markWordError(currentWordIndex.value)
+
             if (settings.value.practiceMode === 'hardcore') {
                 // 硬核模式：任何错误全部重来
                 errorMessage.value = '💥 硬核模式：全部重来！'
@@ -916,6 +986,9 @@ const onInput = () => {
 
 const completeCurrentWord = () => {
     if (!currentWord.value) return
+
+    // 清除当前单词的错误状态（因为已经正确完成）
+    practiceStore.clearWordError(currentWordIndex.value)
 
     // 直接增加正确计数和总计数
     totalCount.value++

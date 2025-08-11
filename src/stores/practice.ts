@@ -29,6 +29,8 @@ export interface PracticeSettings {
   wordLoopCount: '1' | '3' | '5' | '8' | 'infinite'
 }
 
+export type WordStatus = 'untouched' | 'current' | 'completed' | 'skipped' | 'error'
+
 export const usePracticeStore = defineStore('practice', () => {
   // 状态
   const currentDictionary = ref<Dictionary | null>(null)
@@ -41,6 +43,11 @@ export const usePracticeStore = defineStore('practice', () => {
   
   // 单词循环计数状态
   const wordCompletionCounts = ref<Map<number, number>>(new Map())
+  
+  // 单词状态跟踪
+  const wordStatuses = ref<Map<number, WordStatus>>(new Map())
+  const skippedWords = ref<Set<number>>(new Set())
+  const errorWords = ref<Set<number>>(new Set())
   
   // 统计数据
   const correctCount = ref(0)
@@ -88,6 +95,37 @@ export const usePracticeStore = defineStore('practice', () => {
     }
   })
 
+  // 获取单词状态的计算属性
+  const getWordStatus = computed(() => {
+    return (index: number): WordStatus => {
+      // 当前正在练习的单词
+      if (index === currentWordIndex.value) {
+        return 'current'
+      }
+      
+      // 检查是否被跳过
+      if (skippedWords.value.has(index)) {
+        return 'skipped'
+      }
+      
+      // 检查是否有错误记录
+      if (errorWords.value.has(index)) {
+        return 'error'
+      }
+      
+      // 检查是否已完成
+      const completionCount = wordCompletionCounts.value.get(index) || 0
+      const requiredCount = settings.value.wordLoopCount === 'infinite' ? 1 : parseInt(settings.value.wordLoopCount)
+      
+      if (completionCount >= requiredCount) {
+        return 'completed'
+      }
+      
+      // 未开始练习
+      return 'untouched'
+    }
+  })
+
   // 方法
   const setDictionary = (dictionary: Dictionary) => {
     currentDictionary.value = dictionary
@@ -103,6 +141,9 @@ export const usePracticeStore = defineStore('practice', () => {
     startTime.value = null
     endTime.value = null
     wordCompletionCounts.value.clear()
+    wordStatuses.value.clear()
+    skippedWords.value.clear()
+    errorWords.value.clear()
   }
 
   const nextChapter = () => {
@@ -166,9 +207,30 @@ export const usePracticeStore = defineStore('practice', () => {
   }
 
   const skipWord = () => {
+    // 标记当前单词为跳过状态
+    skippedWords.value.add(currentWordIndex.value)
+    
     // 跳过当前单词（用于空格键或其他跳过操作）
     totalCount.value++
-    nextWord()
+    
+    // 移动到下一个单词（不增加完成计数）
+    const words = currentChapterWords.value
+    if (currentWordIndex.value < words.length - 1) {
+      currentWordIndex.value++
+      userInput.value = ''
+    } else {
+      completeChapter()
+    }
+  }
+
+  // 标记单词错误状态
+  const markWordError = (wordIndex: number) => {
+    errorWords.value.add(wordIndex)
+  }
+
+  // 清除单词错误状态（当单词被正确完成时）
+  const clearWordError = (wordIndex: number) => {
+    errorWords.value.delete(wordIndex)
   }
 
   const completeChapter = () => {
@@ -263,6 +325,7 @@ export const usePracticeStore = defineStore('practice', () => {
     currentWord,
     progress,
     currentWordLoopProgress,
+    getWordStatus,
     
     // 方法
     setDictionary,
@@ -275,6 +338,8 @@ export const usePracticeStore = defineStore('practice', () => {
     completeChapter,
     playPronunciation,
     getPronunciationUrl,
-    shuffleCurrentChapter
+    shuffleCurrentChapter,
+    markWordError,
+    clearWordError
   }
 })
