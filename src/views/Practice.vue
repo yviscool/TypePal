@@ -535,20 +535,34 @@
                 </div>
 
                 <!-- 提示信息 -->
-                <div class="text-lg opacity-60 mb-8 min-h-[3rem] flex items-center justify-center">
+                <div class="text-base opacity-70 mb-8 min-h-[3rem] flex items-center justify-center">
                     <div v-if="errorMessage"
-                        class="text-red-400 animate-bounce font-medium px-4 py-2 bg-red-500/10 rounded-lg border border-red-500/20">
-                        {{ errorMessage }}
+                        class="text-red-800 font-semibold px-6 py-3 bg-gradient-to-r from-red-100/90 to-red-200/95 backdrop-blur-md rounded-xl border border-red-300/60 shadow-lg transition-all duration-300 ring-1 ring-red-300/40">
+                        <div class="flex items-center gap-2">
+                            <div class="w-2 h-2 bg-red-600 rounded-full animate-pulse shadow-sm shadow-red-500/50"></div>
+                            <span class="text-sm font-medium text-red-900 drop-shadow-sm">{{ errorMessage }}</span>
+                        </div>
                     </div>
                     <div v-else-if="successMessage"
-                        class="text-green-400 animate-pulse font-medium px-4 py-2 bg-green-500/10 rounded-lg border border-green-500/20">
-                        {{ successMessage }}
+                        class="text-green-800 font-semibold px-6 py-3 bg-gradient-to-r from-green-100/90 to-emerald-100/95 backdrop-blur-md rounded-xl border border-green-300/60 shadow-lg transition-all duration-300 ring-1 ring-green-300/40">
+                        <div class="flex items-center gap-2">
+                            <div class="w-2 h-2 bg-green-600 rounded-full animate-pulse shadow-sm shadow-green-500/50"></div>
+                            <span class="text-sm font-medium text-green-900 drop-shadow-sm">{{ successMessage }}</span>
+                        </div>
                     </div>
-                    <div v-else-if="!settings.dictationMode" class="opacity-40 font-medium">
-                        开始输入单词...
+                    <div v-else-if="!settings.dictationMode"
+                        class="opacity-50 font-medium text-sm px-4 py-2 bg-white/5 backdrop-blur-sm rounded-lg border border-white/10">
+                        <div class="flex items-center gap-2">
+                            <div class="w-1 h-1 bg-white/40 rounded-full animate-pulse"></div>
+                            <span>开始输入单词...</span>
+                        </div>
                     </div>
-                    <div v-else class="opacity-40 font-medium">
-                        听音输入单词...
+                    <div v-else
+                        class="opacity-50 font-medium text-sm px-4 py-2 bg-white/5 backdrop-blur-sm rounded-lg border border-white/10">
+                        <div class="flex items-center gap-2">
+                            <div class="w-1 h-1 bg-white/40 rounded-full animate-pulse"></div>
+                            <span>听音输入单词...</span>
+                        </div>
                     </div>
                 </div>
 
@@ -600,8 +614,8 @@
                         {{ currentChapter >= availableChapters.length - 1 ? '全部完成！' : '章节完成！' }}
                     </h2>
                     <p class="text-lg opacity-80 mb-8">
-                        {{ currentChapter >= availableChapters.length - 1 
-                            ? '恭喜！你已经完成了所有章节的练习' 
+                        {{ currentChapter >= availableChapters.length - 1
+                            ? '恭喜！你已经完成了所有章节的练习'
                             : '太棒了！你和键盘简直是天作之合' }}
                     </p>
                 </div>
@@ -640,7 +654,8 @@
                         class="px-8 py-4 bg-gradient-to-r from-coral-500 to-coral-600 text-white rounded-2xl font-medium text-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 relative">
                         {{ currentChapter >= availableChapters.length - 1 ? '重新开始第一章' : '再来一轮，状态正佳！' }}
                         <!-- Enter键提示 -->
-                        <div class="absolute -top-2 -right-2 px-2 py-1 bg-white/20 backdrop-blur-sm rounded-lg text-xs font-mono border border-white/30">
+                        <div
+                            class="absolute -top-2 -right-2 px-2 py-1 bg-white/20 backdrop-blur-sm rounded-lg text-xs font-mono border border-white/30">
                             Enter
                         </div>
                     </button>
@@ -649,7 +664,7 @@
                 <!-- 快捷键提示 -->
                 <div class="mt-6 text-center">
                     <p class="text-sm opacity-60">
-                        💡 按 <kbd class="px-2 py-1 bg-white/20 rounded border text-xs font-mono mx-1">Enter</kbd> 
+                        💡 按 <kbd class="px-2 py-1 bg-white/20 rounded border text-xs font-mono mx-1">Enter</kbd>
                         {{ currentChapter >= availableChapters.length - 1 ? '重新开始' : '进入下一章' }}
                     </p>
                 </div>
@@ -694,7 +709,6 @@ const timeInterval = ref<number | null>(null)
 const comboCount = ref(0)
 const showCombo = ref(false)
 const comboTimeout = ref<number | null>(null)
-const tooltipVisible = ref<string>('')
 
 // 新增设置相关状态
 const availableChapters = computed(() => {
@@ -844,7 +858,7 @@ const onInput = () => {
                 setTimeout(() => {
                     clearMessages()
                     completeCurrentWord()
-                }, 200)
+                }, 250)
             }
         }
     }
@@ -884,6 +898,15 @@ const onKeydown = (event: KeyboardEvent) => {
             // 默认行为：重新开始第一章
             currentChapter.value = 0
             practiceStore.resetChapter()
+
+            // 播放第一章第一个单词的发音
+            nextTick(() => {
+                setTimeout(() => {
+                    if (settings.value.soundEnabled && currentWord.value) {
+                        playPronunciation()
+                    }
+                }, 300)
+            })
         } else {
             // 自动进入下一章
             nextChapter()
@@ -942,14 +965,36 @@ const togglePause = () => {
     }
 }
 
-const toggleTheme = () => {
-    // 简单的主题切换逻辑
-    document.documentElement.classList.toggle('dark')
-}
+const playPronunciation = async () => {
+    if (!currentWord.value || !settings.value.soundEnabled) return
 
-const playPronunciation = () => {
-    if (currentWord.value) {
-        practiceStore.playPronunciation(currentWord.value.word)
+    try {
+        // 确保有足够的延迟让组件完全渲染
+        await new Promise(resolve => setTimeout(resolve, 100))
+
+        const url = practiceStore.getPronunciationUrl(currentWord.value.word)
+        if (url) {
+            const audio = new Audio(url)
+
+            // 设置音频属性
+            audio.preload = 'auto'
+            audio.volume = 0.8
+
+            // 等待音频加载完成
+            await new Promise((resolve, reject) => {
+                audio.addEventListener('canplaythrough', resolve, { once: true })
+                audio.addEventListener('error', reject, { once: true })
+
+                // 设置超时，避免无限等待
+                setTimeout(() => reject(new Error('Audio load timeout')), 3000)
+            })
+
+            // 播放音频
+            await audio.play()
+        }
+    } catch (error) {
+        console.warn('发音播放失败:', error)
+        // 可以在这里添加用户提示，但不要阻塞练习流程
     }
 }
 
@@ -959,6 +1004,13 @@ const nextChapter = () => {
 
     nextTick(() => {
         inputRef.value?.focus()
+
+        // 播放新章节第一个单词的发音
+        setTimeout(() => {
+            if (settings.value.soundEnabled && currentWord.value) {
+                playPronunciation()
+            }
+        }, 300)
     })
 }
 
@@ -974,6 +1026,13 @@ const resetCurrentChapter = () => {
 
     nextTick(() => {
         inputRef.value?.focus()
+
+        // 播放重置后第一个单词的发音
+        setTimeout(() => {
+            if (settings.value.soundEnabled && currentWord.value) {
+                playPronunciation()
+            }
+        }, 300)
     })
 }
 
@@ -983,6 +1042,13 @@ const randomizeChapter = () => {
 
     nextTick(() => {
         inputRef.value?.focus()
+
+        // 播放打乱后第一个单词的发音
+        setTimeout(() => {
+            if (settings.value.soundEnabled && currentWord.value) {
+                playPronunciation()
+            }
+        }, 300)
     })
 }
 
@@ -992,6 +1058,13 @@ const onChapterChange = () => {
 
     nextTick(() => {
         inputRef.value?.focus()
+
+        // 播放新章节第一个单词的发音
+        setTimeout(() => {
+            if (settings.value.soundEnabled && currentWord.value) {
+                playPronunciation()
+            }
+        }, 300)
     })
 }
 
@@ -1076,15 +1149,6 @@ const resetCombo = () => {
     }
 }
 
-// 工具提示相关函数
-const showTooltip = (key: string) => {
-    tooltipVisible.value = key
-}
-
-const hideTooltip = () => {
-    tooltipVisible.value = ''
-}
-
 // 启动实时计时器
 const startTimer = () => {
     if (timeInterval.value) return
@@ -1130,7 +1194,7 @@ const handleKeydown = (event: KeyboardEvent) => {
     // Enter键 - 在章节完成时进入下一章
     if (event.key === 'Enter' && isCompleted.value) {
         event.preventDefault(); // 阻止默认行为
-        
+
         const isLastChapter = currentChapter.value >= availableChapters.value.length - 1;
         if (isLastChapter) {
             // 如果是最后一章，则重置到第一章
@@ -1142,8 +1206,6 @@ const handleKeydown = (event: KeyboardEvent) => {
         }
         return; // 处理完毕，直接返回
     }
-    // ==================== 新增代码段 结束 ====================
-
     // Tab键 - 跳过当前单词（替代空格键，避免与浏览器冲突）
     if (event.key === 'Tab' && !showSettings.value && !isPaused.value) {
         skipWord()
@@ -1228,6 +1290,14 @@ onMounted(async () => {
         const dictionary = dictionaryStore.getDictionaryById(dictionaryId)
         if (dictionary) {
             practiceStore.setDictionary(dictionary)
+
+            // 等待组件完全渲染后再播放第一个单词的发音
+            await nextTick()
+            setTimeout(() => {
+                if (settings.value.soundEnabled && currentWord.value) {
+                    playPronunciation()
+                }
+            }, 500) // 给足够的时间让组件完全加载
         } else {
             // 如果找不到词库，返回首页
             router.push('/')

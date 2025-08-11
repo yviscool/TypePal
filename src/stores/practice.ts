@@ -242,6 +242,7 @@ export const usePracticeStore = defineStore('practice', () => {
     skipWord,
     completeChapter,
     playPronunciation,
+    getPronunciationUrl,
     shuffleCurrentChapter
   }
 })
