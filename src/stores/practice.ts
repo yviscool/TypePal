@@ -25,7 +25,8 @@ export interface PracticeSettings {
   loopOnError: boolean
   dictationMode: boolean
   soundEnabled: boolean
-  practiceMode: 'normal' | 'strict'
+  practiceMode: 'normal' | 'strict' | 'hardcore'
+  wordLoopCount: '1' | '3' | '5' | '8' | 'infinite'
 }
 
 export const usePracticeStore = defineStore('practice', () => {
@@ -51,7 +52,8 @@ export const usePracticeStore = defineStore('practice', () => {
     loopOnError: false,
     dictationMode: false,
     soundEnabled: true,
-    practiceMode: 'normal'
+    practiceMode: 'normal',
+    wordLoopCount: '1'
   })
 
   // 计算属性
@@ -189,6 +191,27 @@ export const usePracticeStore = defineStore('practice', () => {
     }
   }
 
+  const shuffleCurrentChapter = () => {
+    if (!currentDictionary.value) return
+    
+    // 获取当前章节的单词
+    const start = currentChapter.value * 20
+    const end = Math.min(start + 20, currentDictionary.value.words.length)
+    const chapterWords = [...currentDictionary.value.words.slice(start, end)]
+    
+    // Fisher-Yates 洗牌算法
+    for (let i = chapterWords.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [chapterWords[i], chapterWords[j]] = [chapterWords[j], chapterWords[i]]
+    }
+    
+    // 更新词典中的单词顺序
+    currentDictionary.value.words.splice(start, end - start, ...chapterWords)
+    
+    // 重置当前练习状态
+    resetChapter()
+  }
+
   return {
     // 状态
     currentDictionary,
@@ -218,6 +241,7 @@ export const usePracticeStore = defineStore('practice', () => {
     nextWord,
     skipWord,
     completeChapter,
-    playPronunciation
+    playPronunciation,
+    shuffleCurrentChapter
   }
 })
