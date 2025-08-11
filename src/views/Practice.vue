@@ -35,257 +35,309 @@
                     <!-- 设置展开按钮 -->
                     <button @click="showSettings = !showSettings"
                         class="p-2 rounded-lg hover:bg-white/10 transition-colors duration-200"
-                        :class="{ 'bg-white/10': showSettings }" title="练习设置 (快捷键: S)">
+                        :class="{ 'bg-white/10': showSettings }" title="练习设置 (快捷键: Alt + S)">
                         <div class="i-ph-gear text-xl" :class="{ 'rotate-90': showSettings }"></div>
                     </button>
 
                     <!-- 暂停按钮 -->
                     <button @click="togglePause"
-                        class="px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg hover:bg-white/20 transition-all duration-300">
-                        {{ isPaused ? '继续' : '暂停' }}
+                        class="p-2 rounded-lg hover:bg-white/10 transition-colors duration-200"
+                        :class="{ 'bg-white/10': isPaused }" 
+                        :title="isPaused ? '继续练习 (快捷键: Esc)' : '暂停练习 (快捷键: Esc)'">
+                        <div class="i-ph-pause text-xl" v-if="!isPaused"></div>
+                        <div class="i-ph-play text-xl" v-else></div>
                     </button>
                 </div>
             </div>
 
-            <!-- 设置区域 - 重构版本 -->
-            <div v-if="showSettings"
-                class="settings-panel mb-6 p-8 rounded-3xl bg-gradient-to-br from-white/15 to-white/8 backdrop-blur-xl border border-white/25 shadow-2xl transition-all duration-500">
+        </header>
 
-                <!-- 设置标题 -->
-                <div class="flex items-center justify-between mb-8">
-                    <div class="flex items-center gap-3">
+        <!-- 设置侧边栏 - 浮动模态框 -->
+        <Transition name="settings-modal" appear>
+            <div v-if="showSettings" class="fixed inset-0 z-50 flex">
+                <!-- 背景遮罩 -->
+                <Transition name="settings-backdrop" appear>
+                    <div class="absolute inset-0 bg-black/20 backdrop-blur-sm" @click="showSettings = false"></div>
+                </Transition>
+
+                <!-- 侧边栏内容 -->
+                <Transition name="settings-sidebar" appear>
+                    <div
+                        class="settings-panel relative ml-auto w-full max-w-md h-full bg-gradient-to-br from-white/95 to-white/90 dark:from-gray-900/95 dark:to-gray-800/90 backdrop-blur-xl border-l border-white/30 shadow-2xl overflow-y-auto">
+
+                        <!-- 设置标题栏 -->
                         <div
-                            class="w-10 h-10 rounded-2xl bg-gradient-to-br from-coral-500 to-coral-600 flex items-center justify-center">
-                            <div class="i-ph-gear text-white text-xl"></div>
-                        </div>
-                        <div>
-                            <h3 class="text-xl font-bold text-gray-900 dark:text-white">练习设置</h3>
-                            <p class="text-sm text-gray-600 dark:text-white/60">个性化你的练习体验</p>
-                        </div>
-                    </div>
-                    <div class="text-xs text-gray-500 dark:text-white/40 font-mono">
-                        按 <kbd class="px-2 py-1 bg-white/20 rounded border">S</kbd> 快速切换
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
-                    <!-- 基础设置卡片 -->
-                    <div class="space-y-6">
-                        <div class="flex items-center gap-2 mb-4">
-                            <div
-                                class="w-6 h-6 rounded-lg bg-gradient-to-br from-coral-500 to-coral-600 flex items-center justify-center">
-                                <div class="i-ph-speaker-high text-white text-sm"></div>
-                            </div>
-                            <h4 class="text-lg font-semibold text-gray-900 dark:text-white">基础设置</h4>
-                        </div>
-
-                        <!-- 发音设置 -->
-                        <div class="space-y-3">
-                            <label class="text-sm font-medium text-gray-700 dark:text-white/80">发音语言</label>
-                            <div class="relative">
-                                <select v-model="settings.pronunciation"
-                                    class="w-full px-4 py-3 rounded-xl bg-white/20 backdrop-blur-sm border border-white/30 focus:border-coral-500 focus:ring-2 focus:ring-coral-500/20 focus:outline-none text-gray-900 dark:text-white text-sm font-medium transition-all duration-300 hover:bg-white/25 appearance-none cursor-pointer">
-                                    <option value="us">🇺🇸 美式英语</option>
-                                    <option value="uk">🇬🇧 英式英语</option>
-                                </select>
-                                <div class="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                                    <div class="i-ph-caret-down text-gray-500"></div>
+                            class="sticky top-0 z-10 p-6 bg-gradient-to-r from-coral-500/10 to-coral-600/10 backdrop-blur-sm border-b border-white/20">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div
+                                        class="w-8 h-8 rounded-xl bg-gradient-to-br from-coral-500 to-coral-600 flex items-center justify-center">
+                                        <div class="i-ph-gear text-white text-lg"></div>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-lg font-bold text-gray-900 dark:text-white">练习设置</h3>
+                                        <p class="text-xs text-gray-600 dark:text-white/60">个性化你的练习体验</p>
+                                    </div>
                                 </div>
+                                <button @click="showSettings = false"
+                                    class="p-2 rounded-lg hover:bg-white/20 transition-colors duration-200"
+                                    title="关闭设置">
+                                    <div class="i-ph-x text-lg text-gray-600 dark:text-white/80"></div>
+                                </button>
+                            </div>
+                            <div class="mt-3 text-xs text-gray-500 dark:text-white/50 font-mono">
+                                按 <kbd class="px-1.5 py-0.5 bg-white/30 rounded text-xs">Alt + S</kbd> 或 <kbd
+                                    class="px-1.5 py-0.5 bg-white/30 rounded text-xs">Esc</kbd> 快速切换
                             </div>
                         </div>
 
+                        <!-- 设置内容 -->
+                        <div class="p-6 space-y-8">
+                            <!-- 基础设置卡片 -->
+                            <div class="space-y-6">
+                                <div class="flex items-center gap-2 mb-4">
+                                    <div
+                                        class="w-6 h-6 rounded-lg bg-gradient-to-br from-coral-500 to-coral-600 flex items-center justify-center">
+                                        <div class="i-ph-speaker-high text-white text-sm"></div>
+                                    </div>
+                                    <h4 class="text-lg font-semibold text-gray-900 dark:text-white">基础设置</h4>
+                                </div>
 
-
-                        <!-- 显示选项 -->
-                        <div class="space-y-4">
-                            <label class="text-sm font-medium text-gray-700 dark:text-white/80">显示选项</label>
-                            <div class="space-y-3">
-                                <label class="flex items-center gap-3 cursor-pointer group">
+                                <!-- 发音设置 -->
+                                <div class="space-y-3">
+                                    <label class="text-sm font-medium text-gray-700 dark:text-white/80">发音语言</label>
                                     <div class="relative">
-                                        <input v-model="settings.showTranslation" type="checkbox"
-                                            class="w-5 h-5 rounded-lg border-2 border-white/40 bg-white/20 checked:bg-gradient-to-br checked:from-coral-500 checked:to-coral-600 checked:border-coral-500 transition-all duration-300 focus:ring-2 focus:ring-coral-500/20">
+                                        <select v-model="settings.pronunciation"
+                                            class="w-full px-4 py-3 rounded-xl bg-white/20 backdrop-blur-sm border border-white/30 focus:border-coral-500 focus:ring-2 focus:ring-coral-500/20 focus:outline-none text-gray-900 dark:text-white text-sm font-medium transition-all duration-300 hover:bg-white/25 appearance-none cursor-pointer">
+                                            <option value="us">🇺🇸 美式英语</option>
+                                            <option value="uk">🇬🇧 英式英语</option>
+                                        </select>
                                         <div
-                                            class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                            <div
-                                                class="i-ph-check text-white text-xs opacity-0 group-has-[:checked]:opacity-100 transition-opacity duration-200">
-                                            </div>
+                                            class="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                                            <div class="i-ph-caret-down text-gray-500"></div>
                                         </div>
                                     </div>
-                                    <span
-                                        class="text-sm text-gray-800 dark:text-white/90 group-hover:text-gray-900 dark:group-hover:text-white transition-colors duration-200">显示中文释义</span>
-                                </label>
-                                <label class="flex items-center gap-3 cursor-pointer group">
-                                    <div class="relative">
-                                        <input v-model="settings.dictationMode" type="checkbox"
-                                            class="w-5 h-5 rounded-lg border-2 border-white/40 bg-white/20 checked:bg-gradient-to-br checked:from-lemon-500 checked:to-lemon-600 checked:border-lemon-500 transition-all duration-300 focus:ring-2 focus:ring-lemon-500/20">
-                                        <div
-                                            class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                            <div
-                                                class="i-ph-check text-white text-xs opacity-0 group-has-[:checked]:opacity-100 transition-opacity duration-200">
+                                </div>
+
+
+
+                                <!-- 显示选项 -->
+                                <div class="space-y-4">
+                                    <label class="text-sm font-medium text-gray-700 dark:text-white/80">显示选项</label>
+                                    <div class="space-y-3">
+                                        <label class="flex items-center gap-3 cursor-pointer group">
+                                            <div class="relative">
+                                                <input v-model="settings.showTranslation" type="checkbox"
+                                                    class="w-5 h-5 rounded-lg border-2 border-white/40 bg-white/20 checked:bg-gradient-to-br checked:from-coral-500 checked:to-coral-600 checked:border-coral-500 transition-all duration-300 focus:ring-2 focus:ring-coral-500/20">
+                                                <div
+                                                    class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                                    <div
+                                                        class="i-ph-check text-white text-xs opacity-0 group-has-[:checked]:opacity-100 transition-opacity duration-200">
+                                                    </div>
+                                                </div>
                                             </div>
+                                            <span
+                                                class="text-sm text-gray-800 dark:text-white/90 group-hover:text-gray-900 dark:group-hover:text-white transition-colors duration-200">显示中文释义</span>
+                                        </label>
+                                        <label class="flex items-center gap-3 cursor-pointer group">
+                                            <div class="relative">
+                                                <input v-model="settings.dictationMode" type="checkbox"
+                                                    class="w-5 h-5 rounded-lg border-2 border-white/40 bg-white/20 checked:bg-gradient-to-br checked:from-lemon-500 checked:to-lemon-600 checked:border-lemon-500 transition-all duration-300 focus:ring-2 focus:ring-lemon-500/20">
+                                                <div
+                                                    class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                                    <div
+                                                        class="i-ph-check text-white text-xs opacity-0 group-has-[:checked]:opacity-100 transition-opacity duration-200">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <span
+                                                class="text-sm text-gray-800 dark:text-white/90 group-hover:text-gray-900 dark:group-hover:text-white transition-colors duration-200">默写模式</span>
+                                        </label>
+                                        <label class="flex items-center gap-3 cursor-pointer group">
+                                            <div class="relative">
+                                                <input v-model="settings.soundEnabled" type="checkbox"
+                                                    class="w-5 h-5 rounded-lg border-2 border-white/40 bg-white/20 checked:bg-gradient-to-br checked:from-electric-blue checked:to-electric-blue/80 checked:border-electric-blue transition-all duration-300 focus:ring-2 focus:ring-electric-blue/20">
+                                                <div
+                                                    class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                                    <div
+                                                        class="i-ph-check text-white text-xs opacity-0 group-has-[:checked]:opacity-100 transition-opacity duration-200">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <span
+                                                class="text-sm text-gray-800 dark:text-white/90 group-hover:text-gray-900 dark:group-hover:text-white transition-colors duration-200">自动发音提示</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 练习模式卡片 -->
+                            <div class="space-y-6">
+                                <div class="flex items-center gap-2 mb-4">
+                                    <div
+                                        class="w-6 h-6 rounded-lg bg-gradient-to-br from-electric-blue to-electric-blue/80 flex items-center justify-center">
+                                        <div class="i-ph-target text-white text-sm"></div>
+                                    </div>
+                                    <h4 class="text-lg font-semibold text-gray-900 dark:text-white">练习模式</h4>
+                                </div>
+
+                                <!-- 练习方式 -->
+                                <div class="space-y-3">
+                                    <label class="text-sm font-medium text-gray-700 dark:text-white/80">练习方式</label>
+                                    <div class="space-y-2">
+                                        <label class="flex items-center gap-3 cursor-pointer group">
+                                            <input v-model="settings.practiceMode" value="normal" type="radio"
+                                                name="practiceMode"
+                                                class="w-4 h-4 text-electric-blue bg-white/20 border-white/40 focus:ring-electric-blue/20 focus:ring-2">
+                                            <div class="flex-1">
+                                                <div class="text-sm font-medium text-gray-800 dark:text-white/90">🎯
+                                                    普通模式</div>
+                                                <div class="text-xs text-gray-600 dark:text-white/60">允许退格修正错误</div>
+                                            </div>
+                                        </label>
+                                        <label class="flex items-center gap-3 cursor-pointer group">
+                                            <input v-model="settings.practiceMode" value="strict" type="radio"
+                                                name="practiceMode"
+                                                class="w-4 h-4 text-electric-blue bg-white/20 border-white/40 focus:ring-electric-blue/20 focus:ring-2">
+                                            <div class="flex-1">
+                                                <div class="text-sm font-medium text-gray-800 dark:text-white/90">⚡ 严格模式
+                                                </div>
+                                                <div class="text-xs text-gray-600 dark:text-white/60">单个字符错误重来</div>
+                                            </div>
+                                        </label>
+                                        <label class="flex items-center gap-3 cursor-pointer group">
+                                            <input v-model="settings.practiceMode" value="hardcore" type="radio"
+                                                name="practiceMode"
+                                                class="w-4 h-4 text-electric-blue bg-white/20 border-white/40 focus:ring-electric-blue/20 focus:ring-2">
+                                            <div class="flex-1">
+                                                <div class="text-sm font-medium text-gray-800 dark:text-white/90">🔥
+                                                    硬核模式</div>
+                                                <div class="text-xs text-gray-600 dark:text-white/60">任何错误全部重来</div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- 单词循环次数 -->
+                                <div class="space-y-3">
+                                    <label class="text-sm font-medium text-gray-700 dark:text-white/80">单词循环次数</label>
+                                    <div class="relative">
+                                        <select v-model="settings.wordLoopCount"
+                                            class="w-full px-4 py-3 rounded-xl bg-white/20 backdrop-blur-sm border border-white/30 focus:border-cyber-pink focus:ring-2 focus:ring-cyber-pink/20 focus:outline-none text-gray-900 dark:text-white text-sm font-medium transition-all duration-300 hover:bg-white/25 appearance-none cursor-pointer">
+                                            <option value="1">1 次 (默认)</option>
+                                            <option value="3">3 次 (加强记忆)</option>
+                                            <option value="5">5 次 (深度练习)</option>
+                                            <option value="8">8 次 (强化训练)</option>
+                                            <option value="infinite">♾️ 无限循环</option>
+                                        </select>
+                                        <div
+                                            class="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                                            <div class="i-ph-caret-down text-gray-500"></div>
                                         </div>
                                     </div>
-                                    <span
-                                        class="text-sm text-gray-800 dark:text-white/90 group-hover:text-gray-900 dark:group-hover:text-white transition-colors duration-200">默写模式</span>
-                                </label>
-                                <label class="flex items-center gap-3 cursor-pointer group">
-                                    <div class="relative">
-                                        <input v-model="settings.soundEnabled" type="checkbox"
-                                            class="w-5 h-5 rounded-lg border-2 border-white/40 bg-white/20 checked:bg-gradient-to-br checked:from-electric-blue checked:to-electric-blue/80 checked:border-electric-blue transition-all duration-300 focus:ring-2 focus:ring-electric-blue/20">
-                                        <div
-                                            class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                    <div class="text-xs text-gray-600 dark:text-white/60">
+                                        每个单词需要正确输入的次数
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 快捷操作卡片 -->
+                            <div class="space-y-6">
+                                <div class="flex items-center gap-2 mb-4">
+                                    <div
+                                        class="w-6 h-6 rounded-lg bg-gradient-to-br from-cyber-pink to-cyber-pink/80 flex items-center justify-center">
+                                        <div class="i-ph-lightning text-white text-sm"></div>
+                                    </div>
+                                    <h4 class="text-lg font-semibold text-gray-900 dark:text-white">快捷操作</h4>
+                                </div>
+
+                                <div class="space-y-4">
+                                    <button @click="resetCurrentChapter"
+                                        class="w-full px-4 py-3 text-sm font-medium bg-white/15 backdrop-blur-sm border border-white/30 rounded-xl hover:bg-white/25 hover:border-white/40 hover:scale-105 transition-all duration-300 text-gray-800 dark:text-white/90 hover:text-gray-900 dark:hover:text-white group">
+                                        <div class="flex items-center justify-center gap-2">
                                             <div
-                                                class="i-ph-check text-white text-xs opacity-0 group-has-[:checked]:opacity-100 transition-opacity duration-200">
+                                                class="i-ph-arrow-clockwise text-base group-hover:rotate-180 transition-transform duration-500">
                                             </div>
+                                            重置当前章节
+                                        </div>
+                                    </button>
+
+                                    <button @click="startDictation"
+                                        class="w-full px-4 py-3 text-sm font-medium bg-gradient-to-r from-coral-500/25 to-coral-600/25 backdrop-blur-sm border border-coral-500/40 rounded-xl hover:from-coral-500/35 hover:to-coral-600/35 hover:border-coral-500/60 hover:scale-105 transition-all duration-300 text-coral-700 dark:text-coral-200 hover:text-coral-800 dark:hover:text-white group">
+                                        <div class="flex items-center justify-center gap-2">
+                                            <div
+                                                class="i-ph-pencil-simple text-base group-hover:scale-110 transition-transform duration-300">
+                                            </div>
+                                            开启默写模式
+                                        </div>
+                                    </button>
+
+                                    <button @click="randomizeChapter"
+                                        class="w-full px-4 py-3 text-sm font-medium bg-gradient-to-r from-lemon-500/25 to-lemon-600/25 backdrop-blur-sm border border-lemon-500/40 rounded-xl hover:from-lemon-500/35 hover:to-lemon-600/35 hover:border-lemon-500/60 hover:scale-105 transition-all duration-300 text-lemon-700 dark:text-lemon-200 hover:text-lemon-800 dark:hover:text-white group">
+                                        <div class="flex items-center justify-center gap-2">
+                                            <div
+                                                class="i-ph-shuffle text-base group-hover:rotate-180 transition-transform duration-300">
+                                            </div>
+                                            随机打乱顺序
+                                        </div>
+                                    </button>
+                                </div>
+
+                                <!-- 快捷键提示 -->
+                                <div class="mt-6 p-4 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20">
+                                    <div class="text-xs font-medium text-gray-700 dark:text-white/70 mb-3">快捷键指南</div>
+                                    <div class="space-y-2 text-xs text-gray-600 dark:text-white/60">
+                                        <div class="flex justify-between items-center">
+                                            <span>切换设置面板</span>
+                                            <kbd class="px-2 py-1 bg-white/20 rounded border text-xs font-mono">Alt +
+                                                S</kbd>
+                                        </div>
+                                        <div class="flex justify-between items-center">
+                                            <span>暂停/继续练习</span>
+                                            <kbd
+                                                class="px-2 py-1 bg-white/20 rounded border text-xs font-mono">Esc</kbd>
+                                        </div>
+                                        <div class="flex justify-between items-center">
+                                            <span>跳过当前单词</span>
+                                            <kbd
+                                                class="px-2 py-1 bg-white/20 rounded border text-xs font-mono">Tab</kbd>
+                                        </div>
+                                        <div class="flex justify-between items-center">
+                                            <span>切换到下一章节</span>
+                                            <kbd class="px-2 py-1 bg-white/20 rounded border text-xs font-mono">Alt +
+                                                C</kbd>
+                                        </div>
+                                        <div class="flex justify-between items-center">
+                                            <span>播放发音</span>
+                                            <kbd class="px-2 py-1 bg-white/20 rounded border text-xs font-mono">Alt +
+                                                P</kbd>
+                                        </div>
+                                        <div class="flex justify-between items-center">
+                                            <span>重置当前章节</span>
+                                            <kbd class="px-2 py-1 bg-white/20 rounded border text-xs font-mono">Alt +
+                                                R</kbd>
                                         </div>
                                     </div>
-                                    <span
-                                        class="text-sm text-gray-800 dark:text-white/90 group-hover:text-gray-900 dark:group-hover:text-white transition-colors duration-200">自动发音提示</span>
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 练习模式卡片 -->
-                    <div class="space-y-6">
-                        <div class="flex items-center gap-2 mb-4">
-                            <div
-                                class="w-6 h-6 rounded-lg bg-gradient-to-br from-electric-blue to-electric-blue/80 flex items-center justify-center">
-                                <div class="i-ph-target text-white text-sm"></div>
-                            </div>
-                            <h4 class="text-lg font-semibold text-gray-900 dark:text-white">练习模式</h4>
-                        </div>
-
-                        <!-- 练习方式 -->
-                        <div class="space-y-3">
-                            <label class="text-sm font-medium text-gray-700 dark:text-white/80">练习方式</label>
-                            <div class="space-y-2">
-                                <label class="flex items-center gap-3 cursor-pointer group">
-                                    <input v-model="settings.practiceMode" value="normal" type="radio"
-                                        name="practiceMode"
-                                        class="w-4 h-4 text-electric-blue bg-white/20 border-white/40 focus:ring-electric-blue/20 focus:ring-2">
-                                    <div class="flex-1">
-                                        <div class="text-sm font-medium text-gray-800 dark:text-white/90">🎯 普通模式</div>
-                                        <div class="text-xs text-gray-600 dark:text-white/60">允许退格修正错误</div>
+                                    <div class="mt-3 pt-3 border-t border-white/10">
+                                        <div class="text-xs text-gray-500 dark:text-white/40">
+                                            💡 使用 Alt + 字母键避免与浏览器快捷键冲突
+                                        </div>
                                     </div>
-                                </label>
-                                <label class="flex items-center gap-3 cursor-pointer group">
-                                    <input v-model="settings.practiceMode" value="strict" type="radio"
-                                        name="practiceMode"
-                                        class="w-4 h-4 text-electric-blue bg-white/20 border-white/40 focus:ring-electric-blue/20 focus:ring-2">
-                                    <div class="flex-1">
-                                        <div class="text-sm font-medium text-gray-800 dark:text-white/90">⚡ 严格模式</div>
-                                        <div class="text-xs text-gray-600 dark:text-white/60">单个字符错误重来</div>
-                                    </div>
-                                </label>
-                                <label class="flex items-center gap-3 cursor-pointer group">
-                                    <input v-model="settings.practiceMode" value="hardcore" type="radio"
-                                        name="practiceMode"
-                                        class="w-4 h-4 text-electric-blue bg-white/20 border-white/40 focus:ring-electric-blue/20 focus:ring-2">
-                                    <div class="flex-1">
-                                        <div class="text-sm font-medium text-gray-800 dark:text-white/90">🔥 硬核模式</div>
-                                        <div class="text-xs text-gray-600 dark:text-white/60">任何错误全部重来</div>
-                                    </div>
-                                </label>
-                            </div>
-                        </div>
-
-                        <!-- 单词循环次数 -->
-                        <div class="space-y-3">
-                            <label class="text-sm font-medium text-gray-700 dark:text-white/80">单词循环次数</label>
-                            <div class="relative">
-                                <select v-model="settings.wordLoopCount"
-                                    class="w-full px-4 py-3 rounded-xl bg-white/20 backdrop-blur-sm border border-white/30 focus:border-cyber-pink focus:ring-2 focus:ring-cyber-pink/20 focus:outline-none text-gray-900 dark:text-white text-sm font-medium transition-all duration-300 hover:bg-white/25 appearance-none cursor-pointer">
-                                    <option value="1">1 次 (默认)</option>
-                                    <option value="3">3 次 (加强记忆)</option>
-                                    <option value="5">5 次 (深度练习)</option>
-                                    <option value="8">8 次 (强化训练)</option>
-                                    <option value="infinite">♾️ 无限循环</option>
-                                </select>
-                                <div class="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                                    <div class="i-ph-caret-down text-gray-500"></div>
-                                </div>
-                            </div>
-                            <div class="text-xs text-gray-600 dark:text-white/60">
-                                每个单词需要正确输入的次数
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 快捷操作卡片 -->
-                    <div class="space-y-6">
-                        <div class="flex items-center gap-2 mb-4">
-                            <div
-                                class="w-6 h-6 rounded-lg bg-gradient-to-br from-cyber-pink to-cyber-pink/80 flex items-center justify-center">
-                                <div class="i-ph-lightning text-white text-sm"></div>
-                            </div>
-                            <h4 class="text-lg font-semibold text-gray-900 dark:text-white">快捷操作</h4>
-                        </div>
-
-                        <div class="space-y-4">
-                            <button @click="resetCurrentChapter"
-                                class="w-full px-4 py-3 text-sm font-medium bg-white/15 backdrop-blur-sm border border-white/30 rounded-xl hover:bg-white/25 hover:border-white/40 hover:scale-105 transition-all duration-300 text-gray-800 dark:text-white/90 hover:text-gray-900 dark:hover:text-white group">
-                                <div class="flex items-center justify-center gap-2">
-                                    <div
-                                        class="i-ph-arrow-clockwise text-base group-hover:rotate-180 transition-transform duration-500">
-                                    </div>
-                                    重置当前章节
-                                </div>
-                            </button>
-
-                            <button @click="startDictation"
-                                class="w-full px-4 py-3 text-sm font-medium bg-gradient-to-r from-coral-500/25 to-coral-600/25 backdrop-blur-sm border border-coral-500/40 rounded-xl hover:from-coral-500/35 hover:to-coral-600/35 hover:border-coral-500/60 hover:scale-105 transition-all duration-300 text-coral-700 dark:text-coral-200 hover:text-coral-800 dark:hover:text-white group">
-                                <div class="flex items-center justify-center gap-2">
-                                    <div
-                                        class="i-ph-pencil-simple text-base group-hover:scale-110 transition-transform duration-300">
-                                    </div>
-                                    开启默写模式
-                                </div>
-                            </button>
-
-                            <button @click="randomizeChapter"
-                                class="w-full px-4 py-3 text-sm font-medium bg-gradient-to-r from-lemon-500/25 to-lemon-600/25 backdrop-blur-sm border border-lemon-500/40 rounded-xl hover:from-lemon-500/35 hover:to-lemon-600/35 hover:border-lemon-500/60 hover:scale-105 transition-all duration-300 text-lemon-700 dark:text-lemon-200 hover:text-lemon-800 dark:hover:text-white group">
-                                <div class="flex items-center justify-center gap-2">
-                                    <div
-                                        class="i-ph-shuffle text-base group-hover:rotate-180 transition-transform duration-300">
-                                    </div>
-                                    随机打乱顺序
-                                </div>
-                            </button>
-                        </div>
-
-                        <!-- 快捷键提示 -->
-                        <div class="mt-6 p-4 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20">
-                            <div class="text-xs font-medium text-gray-700 dark:text-white/70 mb-3">快捷键</div>
-                            <div class="space-y-2 text-xs text-gray-600 dark:text-white/60">
-                                <div class="flex justify-between">
-                                    <span>切换设置</span>
-                                    <kbd class="px-2 py-1 bg-white/20 rounded border text-xs">S</kbd>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span>暂停/继续</span>
-                                    <kbd class="px-2 py-1 bg-white/20 rounded border text-xs">Esc</kbd>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span>跳过单词</span>
-                                    <kbd class="px-2 py-1 bg-white/20 rounded border text-xs">Space</kbd>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span>切换章节</span>
-                                    <kbd class="px-2 py-1 bg-white/20 rounded border text-xs">C</kbd>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                </Transition>
             </div>
+        </Transition>
 
-            <!-- 进度条 -->
+        <!-- 进度条 -->
+        <div class="max-w-4xl mx-auto mb-8">
             <div class="w-full h-2 bg-white/10 rounded-full overflow-hidden">
                 <div class="h-full bg-gradient-to-r from-coral-500 to-lemon-500 transition-all duration-500 ease-out"
                     :style="{ width: `${progress}%` }"></div>
             </div>
-        </header>
+        </div>
 
 
 
@@ -518,14 +570,22 @@
                 </div>
 
                 <!-- 快捷键提示 -->
-                <div class="flex justify-center gap-6 text-xs opacity-40 font-medium">
+                <div class="flex justify-center gap-4 text-xs opacity-40 font-medium flex-wrap">
                     <span class="flex items-center gap-1">
-                        <kbd class="px-2 py-1 bg-white/10 rounded border border-white/20">Space</kbd>
+                        <kbd class="px-2 py-1 bg-white/10 rounded border border-white/20 font-mono">Tab</kbd>
                         跳过
                     </span>
                     <span class="flex items-center gap-1">
-                        <kbd class="px-2 py-1 bg-white/10 rounded border border-white/20">Esc</kbd>
+                        <kbd class="px-2 py-1 bg-white/10 rounded border border-white/20 font-mono">Esc</kbd>
                         暂停
+                    </span>
+                    <span class="flex items-center gap-1">
+                        <kbd class="px-2 py-1 bg-white/10 rounded border border-white/20 font-mono">Alt+P</kbd>
+                        发音
+                    </span>
+                    <span class="flex items-center gap-1">
+                        <kbd class="px-2 py-1 bg-white/10 rounded border border-white/20 font-mono">Alt+S</kbd>
+                        设置
                     </span>
                 </div>
             </div>
@@ -1013,11 +1073,18 @@ const stopTimer = () => {
     }
 }
 
-// 键盘事件处理
+// 键盘事件处理 - 重新设计的科学快捷键系统
 const handleKeydown = (event: KeyboardEvent) => {
-    // 防止在输入时触发快捷键
-    if (event.target === inputRef.value) return
+    // 防止在输入时触发快捷键（除了特殊键）
+    const isInputFocused = event.target === inputRef.value
+    const isSpecialKey = ['Escape', 'Tab'].includes(event.key)
 
+    // 如果正在输入且不是特殊键，不处理快捷键
+    if (isInputFocused && !isSpecialKey && !event.altKey) {
+        return
+    }
+
+    // Esc键 - 暂停/继续或关闭设置
     if (event.key === 'Escape') {
         if (showSettings.value) {
             showSettings.value = false
@@ -1025,24 +1092,80 @@ const handleKeydown = (event: KeyboardEvent) => {
             togglePause()
         }
         event.preventDefault()
+        return
     }
 
-    // S键 - 切换设置
-    if (event.key.toLowerCase() === 's' && !event.ctrlKey && !event.altKey && !event.metaKey) {
-        showSettings.value = !showSettings.value
+    // Tab键 - 跳过当前单词（替代空格键，避免与浏览器冲突）
+    if (event.key === 'Tab' && !showSettings.value && !isPaused.value) {
+        skipWord()
         event.preventDefault()
+        return
     }
 
-    // C键 - 快速切换章节
-    if (event.key.toLowerCase() === 'c' && !event.ctrlKey && !event.altKey && !event.metaKey && !showSettings.value) {
-        const nextChapterIndex = (currentChapter.value + 1) % availableChapters.value.length
-        currentChapter.value = nextChapterIndex
-        event.preventDefault()
+    // Alt + 字母键组合 - 避免与浏览器快捷键冲突
+    if (event.altKey && !event.ctrlKey && !event.metaKey) {
+        const key = event.key.toLowerCase()
+
+        switch (key) {
+            case 's':
+                // Alt + S - 切换设置面板
+                showSettings.value = !showSettings.value
+                event.preventDefault()
+                break
+
+            case 'c':
+                // Alt + C - 切换到下一章节
+                if (!showSettings.value && availableChapters.value.length > 1) {
+                    const nextChapterIndex = (currentChapter.value + 1) % availableChapters.value.length
+                    currentChapter.value = nextChapterIndex
+                    onChapterChange()
+                }
+                event.preventDefault()
+                break
+
+            case 'p':
+                // Alt + P - 播放发音
+                if (!showSettings.value && currentWord.value) {
+                    playPronunciation()
+                }
+                event.preventDefault()
+                break
+
+            case 'r':
+                // Alt + R - 重置当前章节
+                if (!showSettings.value) {
+                    resetCurrentChapter()
+                }
+                event.preventDefault()
+                break
+
+            case 'd':
+                // Alt + D - 切换默写模式
+                if (!showSettings.value) {
+                    settings.value.dictationMode = !settings.value.dictationMode
+                }
+                event.preventDefault()
+                break
+
+            case 't':
+                // Alt + T - 切换释义显示
+                if (!showSettings.value) {
+                    settings.value.showTranslation = !settings.value.showTranslation
+                }
+                event.preventDefault()
+                break
+        }
+        return
     }
 
-    // 确保输入框始终聚焦
+    // 确保输入框始终聚焦（仅在练习状态下）
     if (!isPaused.value && !showSettings.value && inputRef.value && document.activeElement !== inputRef.value) {
-        inputRef.value.focus()
+        // 延迟聚焦，避免干扰其他操作
+        setTimeout(() => {
+            if (!isPaused.value && !showSettings.value && inputRef.value) {
+                inputRef.value.focus()
+            }
+        }, 50)
     }
 }
 
@@ -1492,5 +1615,42 @@ input:disabled {
 .rotate-90 {
     transform: rotate(90deg);
     transition: transform 0.3s ease;
+}
+
+/* 设置弹出动画 */
+.settings-modal-enter-active,
+.settings-modal-leave-active {
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.settings-modal-enter-from,
+.settings-modal-leave-to {
+    opacity: 0;
+}
+
+.settings-backdrop-enter-active,
+.settings-backdrop-leave-active {
+    transition: all 0.25s ease-out;
+}
+
+.settings-backdrop-enter-from,
+.settings-backdrop-leave-to {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+}
+
+.settings-sidebar-enter-active,
+.settings-sidebar-leave-active {
+    transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.settings-sidebar-enter-from,
+.settings-sidebar-leave-to {
+    transform: translateX(100%);
+    opacity: 0;
+}
+
+.settings-sidebar-enter-active {
+    transition-delay: 0.1s;
 }
 </style>
