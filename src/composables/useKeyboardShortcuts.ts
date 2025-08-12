@@ -23,6 +23,9 @@ export function useKeyboardShortcuts(
     currentChapter: number
   }
 ) {
+  // 防止章节切换后立即处理键盘事件的标志
+  let isTransitioning = false
+  
   const handleKeydown = (event: KeyboardEvent) => {
     const state = getState()
     const isInputFocused = event.target instanceof HTMLInputElement
@@ -47,8 +50,17 @@ export function useKeyboardShortcuts(
     // Enter键 - 在章节完成时进入下一章（全局处理）
     if (event.key === 'Enter' && state.isCompleted) {
       event.preventDefault()
-      if (handlers.onNextChapterOnComplete) {
-        handlers.onNextChapterOnComplete()
+      event.stopPropagation()
+      if (handlers.onNextChapterOnComplete && !isTransitioning) {
+        isTransitioning = true
+        // 使用 setTimeout 确保状态更新完成后再处理后续逻辑
+        setTimeout(() => {
+          handlers.onNextChapterOnComplete?.()
+          // 延迟重置转换标志，确保章节切换完全完成
+          setTimeout(() => {
+            isTransitioning = false
+          }, 100)
+        }, 0)
       }
       return
     }
@@ -109,9 +121,9 @@ export function useKeyboardShortcuts(
     }
 
     // 确保输入框始终聚焦（仅在练习状态下）
-    if (!state.isPaused && !state.showSettings && handlers.onFocusInput) {
+    if (!state.isPaused && !state.showSettings && !state.isCompleted && handlers.onFocusInput && !isTransitioning) {
       setTimeout(() => {
-        if (!state.isPaused && !state.showSettings) {
+        if (!state.isPaused && !state.showSettings && !state.isCompleted && !isTransitioning) {
           handlers.onFocusInput?.()
         }
       }, 50)

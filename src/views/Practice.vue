@@ -179,11 +179,14 @@ const playPronunciation = () => {
 
 const nextChapter = () => {
     practiceStore.nextChapter()
+    // 使用双重 nextTick 确保所有状态更新和DOM渲染完成
     nextTick(() => {
-        focusInput()
-        if (settings.value.soundEnabled && currentWord.value) {
-            playPronunciation()
-        }
+        nextTick(() => {
+            focusInput()
+            if (settings.value.soundEnabled && currentWord.value) {
+                playPronunciation()
+            }
+        })
     })
 }
 
@@ -195,38 +198,57 @@ const startDictation = () => {
 
 const resetCurrentChapter = () => {
     practiceStore.resetChapter()
+    // 使用双重 nextTick 确保所有状态更新和DOM渲染完成
     nextTick(() => {
-        focusInput()
-        if (settings.value.soundEnabled && currentWord.value) {
-            playPronunciation()
-        }
+        nextTick(() => {
+            focusInput()
+            if (settings.value.soundEnabled && currentWord.value) {
+                playPronunciation()
+            }
+        })
     })
 }
 
 const randomizeChapter = () => {
     practiceStore.shuffleCurrentChapter()
+    // 使用双重 nextTick 确保所有状态更新和DOM渲染完成
     nextTick(() => {
-        focusInput()
-        if (settings.value.soundEnabled && currentWord.value) {
-            playPronunciation()
-        }
+        nextTick(() => {
+            focusInput()
+            if (settings.value.soundEnabled && currentWord.value) {
+                playPronunciation()
+            }
+        })
     })
 }
 
 const onChapterChange = (value: string) => {
     currentChapter.value = parseInt(value)
     practiceStore.resetChapter()
+    // 使用双重 nextTick 确保所有状态更新和DOM渲染完成
     nextTick(() => {
-        focusInput()
-        if (settings.value.soundEnabled && currentWord.value) {
-            playPronunciation()
-        }
+        nextTick(() => {
+            focusInput()
+            if (settings.value.soundEnabled && currentWord.value) {
+                playPronunciation()
+            }
+        })
     })
 }
 
 const focusInput = () => {
     if (practiceViewRef.value?.inputRef && !isPaused.value && !showSettings.value) {
-        practiceViewRef.value.inputRef.focus()
+        const inputElement = practiceViewRef.value.inputRef
+        // 强制聚焦并清除任何可能的选中状态
+        inputElement.focus()
+        inputElement.setSelectionRange(inputElement.value.length, inputElement.value.length)
+        
+        // 确保输入框真正获得焦点
+        setTimeout(() => {
+            if (document.activeElement !== inputElement) {
+                inputElement.focus()
+            }
+        }, 10)
     }
 }
 
@@ -294,6 +316,15 @@ useKeyboardShortcuts({
         if (isLastChapter) {
             currentChapter.value = 0
             practiceStore.resetChapter()
+            // 使用双重 nextTick 确保所有状态更新和DOM渲染完成
+            nextTick(() => {
+                nextTick(() => {
+                    focusInput()
+                    if (settings.value.soundEnabled && currentWord.value) {
+                        playPronunciation()
+                    }
+                })
+            })
         } else {
             nextChapter()
         }
