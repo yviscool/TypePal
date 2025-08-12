@@ -137,8 +137,8 @@ const handleInput = (event: Event) => {
         },
         () => timer.startTimer(() => isPaused.value || showSettings.value),
         () => {
-            // 单词完成后播放下一个单词的发音
-            if (settings.value.soundEnabled && currentWord.value) {
+            // 单词完成后播放下一个单词的发音（仅在章节未完成时）
+            if (settings.value.soundEnabled && currentWord.value && !isCompleted.value) {
                 playPronunciation()
             }
         }
@@ -164,8 +164,8 @@ const togglePause = () => {
 const skipWord = () => {
     if (!currentWord.value) return
     practiceStore.skipWord()
-    // 立即播放下一个单词的发音
-    if (settings.value.soundEnabled && currentWord.value) {
+    // 立即播放下一个单词的发音（仅在章节未完成时）
+    if (settings.value.soundEnabled && currentWord.value && !isCompleted.value) {
         playPronunciation()
     }
 }
