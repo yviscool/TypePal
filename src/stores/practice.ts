@@ -282,6 +282,8 @@ export const usePracticeStore = defineStore('practice', () => {
     const url = getPronunciationUrl(word)
     if (url) {
       const audio = new Audio(url)
+      audio.volume = 0.8
+      // 依赖浏览器的 HTTP 缓存，无需应用层缓存
       audio.play().catch(console.error)
     }
   }

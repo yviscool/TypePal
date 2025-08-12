@@ -164,50 +164,26 @@ const togglePause = () => {
 const skipWord = () => {
     if (!currentWord.value) return
     practiceStore.skipWord()
+    // 立即播放下一个单词的发音
     if (settings.value.soundEnabled && currentWord.value) {
-        setTimeout(() => playPronunciation(), 100)
+        playPronunciation()
     }
 }
 
-const playPronunciation = async () => {
+const playPronunciation = () => {
     if (!currentWord.value || !settings.value.soundEnabled) return
-
-    try {
-        const url = practiceStore.getPronunciationUrl(currentWord.value.word)
-        if (url) {
-            const audio = new Audio(url)
-            audio.preload = 'auto'
-            audio.volume = 0.8
-
-            await new Promise((resolve, reject) => {
-                audio.addEventListener('canplaythrough', resolve, { once: true })
-                audio.addEventListener('error', reject, { once: true })
-                setTimeout(() => reject(new Error('Audio load timeout')), 3000)
-            })
-
-            await audio.play()
-        }
-    } catch (error) {
-        console.warn('发音播放失败:', error)
-    }
+    practiceStore.playPronunciation(currentWord.value.word)
 }
 
-// 封装一个带延迟和检查的播放函数
-const playCurrentWordAudioWithDelay = (delay = 300) => {
-    nextTick(() => {
-        setTimeout(() => {
-            if (settings.value.soundEnabled && currentWord.value) {
-                playPronunciation()
-            }
-        }, delay)
-    })
-}
+// 移除了音频预加载功能，依赖浏览器 HTTP 缓存
 
 const nextChapter = () => {
     practiceStore.nextChapter()
     nextTick(() => {
         focusInput()
-        playCurrentWordAudioWithDelay()
+        if (settings.value.soundEnabled && currentWord.value) {
+            playPronunciation()
+        }
     })
 }
 
@@ -221,7 +197,9 @@ const resetCurrentChapter = () => {
     practiceStore.resetChapter()
     nextTick(() => {
         focusInput()
-        playCurrentWordAudioWithDelay()
+        if (settings.value.soundEnabled && currentWord.value) {
+            playPronunciation()
+        }
     })
 }
 
@@ -229,7 +207,9 @@ const randomizeChapter = () => {
     practiceStore.shuffleCurrentChapter()
     nextTick(() => {
         focusInput()
-        playCurrentWordAudioWithDelay()
+        if (settings.value.soundEnabled && currentWord.value) {
+            playPronunciation()
+        }
     })
 }
 
@@ -238,7 +218,9 @@ const onChapterChange = (value: string) => {
     practiceStore.resetChapter()
     nextTick(() => {
         focusInput()
-        playCurrentWordAudioWithDelay()
+        if (settings.value.soundEnabled && currentWord.value) {
+            playPronunciation()
+        }
     })
 }
 
@@ -336,13 +318,11 @@ onMounted(async () => {
         if (dictionary) {
             practiceStore.setDictionary(dictionary)
 
-            // 等待组件完全渲染后再播放第一个单词的发音
+            // 等待组件完全渲染后立即播放
             await nextTick()
-            setTimeout(() => {
-                if (settings.value.soundEnabled && currentWord.value) {
-                    playPronunciation()
-                }
-            }, 200)
+            if (settings.value.soundEnabled && currentWord.value) {
+                playPronunciation()
+            }
         } else {
             router.push('/')
             return

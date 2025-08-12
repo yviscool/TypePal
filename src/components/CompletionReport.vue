@@ -1,5 +1,5 @@
 <template>
-  <div class="text-center">
+  <div class="max-w-4xl mx-auto text-center">
     <div class="mb-8">
       <div class="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-coral-500 to-lemon-500 rounded-full flex items-center justify-center">
         <div class="i-ph-trophy text-white text-4xl"></div>
