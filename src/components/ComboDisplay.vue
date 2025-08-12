@@ -1,6 +1,7 @@
 <template>
-  <div v-if="comboCount >= 3" class="absolute top-0 left-0 transform -translate-x-4 -translate-y-16 z-20">
-    <div v-if="enableEffects" class="relative select-none" :class="impactAnimationClass">
+  <div v-if="comboCount >= 3 && effectsLevel !== 'none'" class="absolute top-0 left-0 transform -translate-x-4 -translate-y-16 z-20">
+    <!-- 华丽模式 -->
+    <div v-if="effectsLevel === 'gorgeous'" class="relative select-none" :class="impactAnimationClass">
       <div class="text-center mb-1">
         <div
           class="text-2xl font-black tracking-[0.2em] opacity-80 transform transition-all duration-300"
@@ -51,7 +52,8 @@
       </div>
     </div>
     
-    <div v-else 
+    <!-- 简约模式 -->
+    <div v-else-if="effectsLevel === 'simple'" 
          class="relative flex items-baseline justify-center w-40 h-28"
          :class="{ 'animate-echo-ripple': simpleAnimationState === 'hit' }">
       
@@ -83,12 +85,12 @@ import { ref, watch, computed } from 'vue'
 // 定义 Props 接口
 interface Props {
   comboCount: number
-  enableEffects?: boolean
+  effectsLevel?: 'none' | 'simple' | 'gorgeous'
 }
 
 // 定义带默认值的 Props
 const props = withDefaults(defineProps<Props>(), {
-  enableEffects: true,
+  effectsLevel: 'simple',
 })
 
 // --- 华丽模式状态管理 ---
@@ -105,12 +107,12 @@ let simpleAnimationTimeout: number | undefined
 // --- 统一的逻辑大脑：侦听 comboCount 变化 ---
 watch(() => props.comboCount, (newCount, oldCount) => {
   // 过滤无效变化
-  if (newCount <= oldCount || newCount < 3) {
+  if (newCount <= oldCount || newCount < 3 || props.effectsLevel === 'none') {
     return
   }
 
-  // 根据 enableEffects 决定触发哪种模式的动画
-  if (props.enableEffects) {
+  // 根据 effectsLevel 决定触发哪种模式的动画
+  if (props.effectsLevel === 'gorgeous') {
     // --- 触发【华丽模式】动画 ---
     clearTimeout(animationTimeout)
     const oldTier = getTier(oldCount)
@@ -123,7 +125,7 @@ watch(() => props.comboCount, (newCount, oldCount) => {
       animationState.value = 'hit'
       animationTimeout = window.setTimeout(() => animationState.value = 'idle', 400)
     }
-  } else {
+  } else if (props.effectsLevel === 'simple') {
     // --- 触发【简约模式】动画 ---
     clearTimeout(simpleAnimationTimeout)
     simpleAnimationState.value = 'hit'

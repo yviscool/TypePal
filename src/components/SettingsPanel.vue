@@ -9,13 +9,16 @@
 
       <!-- 侧边栏内容 -->
       <Transition name="settings-sidebar" appear>
-        <div class="settings-panel relative ml-auto w-full max-w-md h-full bg-gradient-to-br from-white/95 to-white/90 dark:from-gray-900/95 dark:to-gray-800/90 backdrop-blur-xl border-l border-white/30 shadow-2xl overflow-y-auto">
+        <div
+          class="settings-panel relative ml-auto w-full max-w-md h-full bg-gradient-to-br from-white/95 to-white/90 dark:from-gray-900/95 dark:to-gray-800/90 backdrop-blur-xl border-l border-white/30 shadow-2xl overflow-y-auto">
 
           <!-- 设置标题栏 -->
-          <div class="sticky top-0 z-10 p-6 bg-gradient-to-r from-coral-500/10 to-coral-600/10 backdrop-blur-sm border-b border-white/20">
+          <div
+            class="sticky top-0 z-10 p-6 bg-gradient-to-r from-coral-500/10 to-coral-600/10 backdrop-blur-sm border-b border-white/20">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-coral-500 to-coral-600 flex items-center justify-center">
+                <div
+                  class="w-8 h-8 rounded-xl bg-gradient-to-br from-coral-500 to-coral-600 flex items-center justify-center">
                   <div class="i-ph-gear text-white text-lg"></div>
                 </div>
                 <div>
@@ -23,12 +26,14 @@
                   <p class="text-xs text-gray-600 dark:text-white/60">个性化你的练习体验</p>
                 </div>
               </div>
-              <button @click="$emit('close')" class="p-2 rounded-lg hover:bg-white/20 transition-colors duration-200" title="关闭设置">
+              <button @click="$emit('close')" class="p-2 rounded-lg hover:bg-white/20 transition-colors duration-200"
+                title="关闭设置">
                 <div class="i-ph-x text-lg text-gray-600 dark:text-white/80"></div>
               </button>
             </div>
             <div class="mt-3 text-xs text-gray-500 dark:text-white/50 font-mono">
-              按 <kbd class="px-1.5 py-0.5 bg-white/30 rounded text-xs">Alt + S</kbd> 或 <kbd class="px-1.5 py-0.5 bg-white/30 rounded text-xs">Esc</kbd> 快速切换
+              按 <kbd class="px-1.5 py-0.5 bg-white/30 rounded text-xs">Alt + S</kbd> 或 <kbd
+                class="px-1.5 py-0.5 bg-white/30 rounded text-xs">Esc</kbd> 快速切换
             </div>
           </div>
 
@@ -37,7 +42,8 @@
             <!-- 基础设置卡片 -->
             <div class="space-y-6">
               <div class="flex items-center gap-2 mb-4">
-                <div class="w-6 h-6 rounded-lg bg-gradient-to-br from-coral-500 to-coral-600 flex items-center justify-center">
+                <div
+                  class="w-6 h-6 rounded-lg bg-gradient-to-br from-coral-500 to-coral-600 flex items-center justify-center">
                   <div class="i-ph-speaker-high text-white text-sm"></div>
                 </div>
                 <h4 class="text-lg font-semibold text-gray-900 dark:text-white">基础设置</h4>
@@ -67,41 +73,71 @@
                       <input v-model="localSettings.showTranslation" type="checkbox"
                         class="w-5 h-5 rounded-lg border-2 border-white/40 bg-white/20 checked:bg-gradient-to-br checked:from-coral-500 checked:to-coral-600 checked:border-coral-500 transition-all duration-300 focus:ring-2 focus:ring-coral-500/20">
                       <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <div class="i-ph-check text-white text-xs opacity-0 group-has-[:checked]:opacity-100 transition-opacity duration-200"></div>
+                        <div
+                          class="i-ph-check text-white text-xs opacity-0 group-has-[:checked]:opacity-100 transition-opacity duration-200">
+                        </div>
                       </div>
                     </div>
-                    <span class="text-sm text-gray-800 dark:text-white/90 group-hover:text-gray-900 dark:group-hover:text-white transition-colors duration-200">显示中文释义</span>
+                    <span
+                      class="text-sm text-gray-800 dark:text-white/90 group-hover:text-gray-900 dark:group-hover:text-white transition-colors duration-200">显示中文释义</span>
                   </label>
                   <label class="flex items-center gap-3 cursor-pointer group">
                     <div class="relative">
                       <input v-model="localSettings.dictationMode" type="checkbox"
                         class="w-5 h-5 rounded-lg border-2 border-white/40 bg-white/20 checked:bg-gradient-to-br checked:from-lemon-500 checked:to-lemon-600 checked:border-lemon-500 transition-all duration-300 focus:ring-2 focus:ring-lemon-500/20">
                       <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <div class="i-ph-check text-white text-xs opacity-0 group-has-[:checked]:opacity-100 transition-opacity duration-200"></div>
+                        <div
+                          class="i-ph-check text-white text-xs opacity-0 group-has-[:checked]:opacity-100 transition-opacity duration-200">
+                        </div>
                       </div>
                     </div>
-                    <span class="text-sm text-gray-800 dark:text-white/90 group-hover:text-gray-900 dark:group-hover:text-white transition-colors duration-200">默写模式</span>
+                    <span
+                      class="text-sm text-gray-800 dark:text-white/90 group-hover:text-gray-900 dark:group-hover:text-white transition-colors duration-200">默写模式</span>
                   </label>
                   <label class="flex items-center gap-3 cursor-pointer group">
                     <div class="relative">
                       <input v-model="localSettings.soundEnabled" type="checkbox"
                         class="w-5 h-5 rounded-lg border-2 border-white/40 bg-white/20 checked:bg-gradient-to-br checked:from-electric-blue checked:to-electric-blue/80 checked:border-electric-blue transition-all duration-300 focus:ring-2 focus:ring-electric-blue/20">
                       <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <div class="i-ph-check text-white text-xs opacity-0 group-has-[:checked]:opacity-100 transition-opacity duration-200"></div>
+                        <div
+                          class="i-ph-check text-white text-xs opacity-0 group-has-[:checked]:opacity-100 transition-opacity duration-200">
+                        </div>
                       </div>
                     </div>
-                    <span class="text-sm text-gray-800 dark:text-white/90 group-hover:text-gray-900 dark:group-hover:text-white transition-colors duration-200">自动发音提示</span>
+                    <span
+                      class="text-sm text-gray-800 dark:text-white/90 group-hover:text-gray-900 dark:group-hover:text-white transition-colors duration-200">自动发音提示</span>
                   </label>
-                  <label class="flex items-center gap-3 cursor-pointer group">
-                    <div class="relative">
-                      <input v-model="localSettings.comboEffectsEnabled" type="checkbox"
-                        class="w-5 h-5 rounded-lg border-2 border-white/40 bg-white/20 checked:bg-gradient-to-br checked:from-cyber-pink checked:to-cyber-pink/80 checked:border-cyber-pink transition-all duration-300 focus:ring-2 focus:ring-cyber-pink/20">
-                      <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <div class="i-ph-check text-white text-xs opacity-0 group-has-[:checked]:opacity-100 transition-opacity duration-200"></div>
-                      </div>
+                  <!-- 特效设置 -->
+                  <div class="space-y-3">
+                    <label class="text-sm font-medium text-gray-700 dark:text-white/80">连击特效</label>
+                    <div class="space-y-2">
+                      <label class="flex items-center gap-3 cursor-pointer group">
+                        <input v-model="localSettings.comboEffectsLevel" value="none" type="radio" name="comboEffects"
+                          class="w-4 h-4 text-gray-500 bg-white/20 border-white/40 focus:ring-gray-500/20 focus:ring-2">
+                        <div class="flex-1">
+                          <div class="text-sm font-medium text-gray-800 dark:text-white/90">🚫 无特效</div>
+                          <div class="text-xs text-gray-600 dark:text-white/60">专注练习，不显示任何特效</div>
+                        </div>
+                      </label>
+                      <label class="flex items-center gap-3 cursor-pointer group">
+                        <input v-model="localSettings.comboEffectsLevel" value="simple" type="radio" name="comboEffects"
+                          class="w-4 h-4 text-electric-blue bg-white/20 border-white/40 focus:ring-electric-blue/20 focus:ring-2">
+                        <div class="flex-1">
+                          <div class="text-sm font-medium text-gray-800 dark:text-white/90">✨ 简约特效</div>
+                          <div class="text-xs text-gray-600 dark:text-white/60">简单的连击提示和动画</div>
+                        </div>
+                      </label>
+                      <label class="flex items-center gap-3 cursor-pointer group">
+                        <input v-model="localSettings.comboEffectsLevel" value="gorgeous" type="radio"
+                          name="comboEffects"
+                          class="w-4 h-4 text-cyber-pink bg-white/20 border-white/40 focus:ring-cyber-pink/20 focus:ring-2">
+                        <div class="flex-1">
+                          <div class="text-sm font-medium text-gray-800 dark:text-white/90">🎆 华丽特效</div>
+                          <div class="text-xs text-gray-600 dark:text-white/60">炫酷的粒子效果和动画</div>
+                        </div>
+                      </label>
                     </div>
-                    <span class="text-sm text-gray-800 dark:text-white/90 group-hover:text-gray-900 dark:group-hover:text-white transition-colors duration-200">启用华丽连击特效</span>
-                  </label>
+                  </div>
                 </div>
               </div>
             </div>
@@ -109,7 +145,8 @@
             <!-- 练习模式卡片 -->
             <div class="space-y-6">
               <div class="flex items-center gap-2 mb-4">
-                <div class="w-6 h-6 rounded-lg bg-gradient-to-br from-electric-blue to-electric-blue/80 flex items-center justify-center">
+                <div
+                  class="w-6 h-6 rounded-lg bg-gradient-to-br from-electric-blue to-electric-blue/80 flex items-center justify-center">
                   <div class="i-ph-target text-white text-sm"></div>
                 </div>
                 <h4 class="text-lg font-semibold text-gray-900 dark:text-white">练习模式</h4>
@@ -171,7 +208,8 @@
             <!-- 快捷操作卡片 -->
             <div class="space-y-6">
               <div class="flex items-center gap-2 mb-4">
-                <div class="w-6 h-6 rounded-lg bg-gradient-to-br from-cyber-pink to-cyber-pink/80 flex items-center justify-center">
+                <div
+                  class="w-6 h-6 rounded-lg bg-gradient-to-br from-cyber-pink to-cyber-pink/80 flex items-center justify-center">
                   <div class="i-ph-lightning text-white text-sm"></div>
                 </div>
                 <h4 class="text-lg font-semibold text-gray-900 dark:text-white">快捷操作</h4>
@@ -181,7 +219,9 @@
                 <button @click="$emit('resetChapter')"
                   class="w-full px-4 py-3 text-sm font-medium bg-white/15 backdrop-blur-sm border border-white/30 rounded-xl hover:bg-white/25 hover:border-white/40 hover:scale-105 transition-all duration-300 text-gray-800 dark:text-white/90 hover:text-gray-900 dark:hover:text-white group">
                   <div class="flex items-center justify-center gap-2">
-                    <div class="i-ph-arrow-clockwise text-base group-hover:rotate-180 transition-transform duration-500"></div>
+                    <div
+                      class="i-ph-arrow-clockwise text-base group-hover:rotate-180 transition-transform duration-500">
+                    </div>
                     重置当前章节
                   </div>
                 </button>
@@ -189,7 +229,8 @@
                 <button @click="$emit('startDictation')"
                   class="w-full px-4 py-3 text-sm font-medium bg-gradient-to-r from-coral-500/25 to-coral-600/25 backdrop-blur-sm border border-coral-500/40 rounded-xl hover:from-coral-500/35 hover:to-coral-600/35 hover:border-coral-500/60 hover:scale-105 transition-all duration-300 text-coral-700 dark:text-coral-200 hover:text-coral-800 dark:hover:text-white group">
                   <div class="flex items-center justify-center gap-2">
-                    <div class="i-ph-pencil-simple text-base group-hover:scale-110 transition-transform duration-300"></div>
+                    <div class="i-ph-pencil-simple text-base group-hover:scale-110 transition-transform duration-300">
+                    </div>
                     开启默写模式
                   </div>
                 </button>
