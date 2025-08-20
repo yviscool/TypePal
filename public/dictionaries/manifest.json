@@ -1,0 +1,75 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2025-08-20T12:50:00Z",
+  "dictionaries": [
+    {
+      "id": "prog-common",
+      "name": "编程通用术语",
+      "description": "常见计算机与编程核心术语",
+      "category": "编程",
+      "subcategory": "通用",
+      "tags": ["programming", "common", "tech", "vocabulary"],
+      "language": "en",
+      "wordCount": 30,
+      "dataPath": "/dictionaries/programming/common/prog-common.json"
+    },
+    {
+      "id": "prog-python",
+      "name": "编程·Python术语",
+      "description": "Python 生态常见术语与关键概念",
+      "category": "编程",
+      "subcategory": "Python",
+      "tags": ["python", "backend", "data"],
+      "language": "en",
+      "wordCount": 30,
+      "dataPath": "/dictionaries/programming/python/prog-python.json"
+    },
+    {
+      "id": "prog-cpp",
+      "name": "编程·C++术语",
+      "description": "C++ 核心概念与标准库常用术语",
+      "category": "编程",
+      "subcategory": "C++",
+      "tags": ["cpp", "stl", "system"],
+      "language": "en",
+      "wordCount": 30,
+      "dataPath": "/dictionaries/programming/cpp/prog-cpp.json"
+    },
+    {
+      "id": "en-primary-renjiao",
+      "name": "英语·小学·人教版",
+      "description": "小学阶段基础词汇（人教版）",
+      "category": "英语",
+      "subcategory": "小学",
+      "edition": "人教版",
+      "tags": ["primary", "renjiao", "basic"],
+      "language": "en",
+      "wordCount": 30,
+      "dataPath": "/dictionaries/english/primary/en-primary-renjiao.json"
+    },
+    {
+      "id": "en-primary-sujiao",
+      "name": "英语·小学·苏教版",
+      "description": "小学阶段基础词汇（苏教版）",
+      "category": "英语",
+      "subcategory": "小学",
+      "edition": "苏教版",
+      "tags": ["primary", "sujiao", "basic"],
+      "language": "en",
+      "wordCount": 30,
+      "dataPath": "/dictionaries/english/primary/en-primary-sujiao.json"
+    },
+    {
+      "id": "en-middle-yilin",
+      "name": "英语·中学·译林版",
+      "description": "中学阶段常见词汇（译林版）",
+      "category": "英语",
+      "subcategory": "中学",
+      "edition": "译林版",
+      "tags": ["middle", "yilin", "school"],
+      "language": "en",
+      "wordCount": 30,
+      "dataPath": "/dictionaries/english/middle/en-middle-yilin.json"
+    }
+  ]
+}

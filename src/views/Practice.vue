@@ -20,7 +20,7 @@
         </div>
 
         <!-- 主练习区域 -->
-        <PracticeView v-if="!isCompleted" :current-word="currentWord" :current-word-index="currentWordIndex"
+        <PracticeView v-if="currentDictionary && !isCompleted" :current-word="currentWord" :current-word-index="currentWordIndex"
             :current-chapter-words="currentChapterWords" :user-input="userInput" :settings="settings"
             :current-word-loop-progress="currentWordLoopProgress" :get-word-status="getWordStatus" :is-paused="isPaused"
             :is-completed="isCompleted" :current-time="timer.currentTime.value" :correct-count="correctCount"
@@ -340,27 +340,27 @@ useKeyboardShortcuts({
 
 onMounted(async () => {
     // 初始化词库数据
-    dictionaryStore.initDictionaries()
+    await dictionaryStore.initDictionaries()
 
     // 从路由参数获取词库ID
     const dictionaryId = route.params.id as string
-    if (dictionaryId) {
-        const dictionary = dictionaryStore.getDictionaryById(dictionaryId)
-        if (dictionary) {
-            practiceStore.setDictionary(dictionary)
-
-            // 等待组件完全渲染后立即播放
-            await nextTick()
-            if (settings.value.soundEnabled && currentWord.value) {
-                playPronunciation()
-            }
-        } else {
-            router.push('/')
-            return
-        }
-    } else {
+    if (!dictionaryId) {
         router.push('/')
         return
+    }
+
+    const dict = await dictionaryStore.ensureDictionaryLoadedById(dictionaryId)
+    if (!dict) {
+        router.push('/')
+        return
+    }
+
+    practiceStore.setDictionary(dict)
+
+    // 等待组件完全渲染后立即播放
+    await nextTick()
+    if (settings.value.soundEnabled && currentWord.value) {
+        playPronunciation()
     }
 
     // 自动聚焦输入框

@@ -1,122 +1,116 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import type { Dictionary } from './practice'
+import type { Dictionary as PracticeDictionary, Word as PracticeWord } from './practice'
+import type { DictionaryMeta, DictionaryManifest, DictionaryPayload } from '@/types/dictionary'
 
 export const useDictionaryStore = defineStore('dictionary', () => {
-  const dictionaries = ref<Dictionary[]>([])
+  // 词库清单（仅元数据）
+  const dictionaries = ref<DictionaryMeta[]>([])
+  // 加载状态与错误
   const loading = ref(false)
+  const error = ref<string | null>(null)
+  // 已加载词表缓存（避免重复请求）
+  const cache = ref<Map<string, PracticeDictionary>>(new Map())
 
-  // 示例词库数据
-  const sampleDictionaries: Dictionary[] = [
-    {
-      id: 'coder-dict',
-      name: 'Coder Dict',
-      description: '程序员必备英语词汇，涵盖编程、算法、数据结构等核心概念',
-      category: '编程',
-      tags: ['code', 'programming', 'tech'],
-      language: 'en',
-      words: [
-        { word: 'cat', translation: '猫', phonetic: '/kæt/', category: '动物', tags: ['animal'] },
-        { word: 'dog', translation: '狗', phonetic: '/dɔːɡ/', category: '动物', tags: ['animal'] },
-        { word: 'book', translation: '书', phonetic: '/bʊk/', category: '物品', tags: ['object'] },
-        { word: 'pen', translation: '笔', phonetic: '/pen/', category: '物品', tags: ['object'] },
-        { word: 'car', translation: '汽车', phonetic: '/kɑːr/', category: '交通', tags: ['transport'] },
-        { word: 'house', translation: '房子', phonetic: '/haʊs/', category: '建筑', tags: ['building'] },
-        { word: 'water', translation: '水', phonetic: '/ˈwɔːtər/', category: '自然', tags: ['nature'] },
-        { word: 'food', translation: '食物', phonetic: '/fuːd/', category: '食物', tags: ['food'] },
-        { word: 'apple', translation: '苹果', phonetic: '/ˈæpəl/', category: '食物', tags: ['fruit'] },
-        { word: 'tree', translation: '树', phonetic: '/triː/', category: '自然', tags: ['nature'] },
-        { word: 'sun', translation: '太阳', phonetic: '/sʌn/', category: '自然', tags: ['nature'] },
-        { word: 'moon', translation: '月亮', phonetic: '/muːn/', category: '自然', tags: ['nature'] },
-        { word: 'red', translation: '红色', phonetic: '/red/', category: '颜色', tags: ['color'] },
-        { word: 'blue', translation: '蓝色', phonetic: '/bluː/', category: '颜色', tags: ['color'] },
-        { word: 'green', translation: '绿色', phonetic: '/ɡriːn/', category: '颜色', tags: ['color'] },
-        { word: 'big', translation: '大的', phonetic: '/bɪɡ/', category: '形容词', tags: ['adjective'] },
-        { word: 'small', translation: '小的', phonetic: '/smɔːl/', category: '形容词', tags: ['adjective'] },
-        { word: 'good', translation: '好的', phonetic: '/ɡʊd/', category: '形容词', tags: ['adjective'] },
-        { word: 'bad', translation: '坏的', phonetic: '/bæd/', category: '形容词', tags: ['adjective'] },
-        { word: 'happy', translation: '快乐的', phonetic: '/ˈhæpi/', category: '形容词', tags: ['emotion'] },
-        { word: 'sad', translation: '悲伤的', phonetic: '/sæd/', category: '形容词', tags: ['emotion'] },
-        { word: 'run', translation: '跑', phonetic: '/rʌn/', category: '动词', tags: ['verb'] },
-        { word: 'walk', translation: '走', phonetic: '/wɔːk/', category: '动词', tags: ['verb'] },
-        { word: 'eat', translation: '吃', phonetic: '/iːt/', category: '动词', tags: ['verb'] },
-        { word: 'drink', translation: '喝', phonetic: '/drɪŋk/', category: '动词', tags: ['verb'] },
-        { word: 'sleep', translation: '睡觉', phonetic: '/sliːp/', category: '动词', tags: ['verb'] },
-        { word: 'work', translation: '工作', phonetic: '/wɜːrk/', category: '动词', tags: ['verb'] },
-        { word: 'play', translation: '玩', phonetic: '/pleɪ/', category: '动词', tags: ['verb'] },
-        { word: 'love', translation: '爱', phonetic: '/lʌv/', category: '动词', tags: ['emotion'] },
-        { word: 'like', translation: '喜欢', phonetic: '/laɪk/', category: '动词', tags: ['emotion'] },
-        { word: 'one', translation: '一', phonetic: '/wʌn/', category: '数字', tags: ['number'] },
-        { word: 'two', translation: '二', phonetic: '/tuː/', category: '数字', tags: ['number'] },
-        { word: 'three', translation: '三', phonetic: '/θriː/', category: '数字', tags: ['number'] },
-        { word: 'four', translation: '四', phonetic: '/fɔːr/', category: '数字', tags: ['number'] },
-        { word: 'five', translation: '五', phonetic: '/faɪv/', category: '数字', tags: ['number'] },
-        { word: 'yes', translation: '是的', phonetic: '/jes/', category: '常用词', tags: ['common'] },
-        { word: 'no', translation: '不', phonetic: '/noʊ/', category: '常用词', tags: ['common'] },
-        { word: 'hello', translation: '你好', phonetic: '/həˈloʊ/', category: '问候', tags: ['greeting'] },
-        { word: 'goodbye', translation: '再见', phonetic: '/ɡʊdˈbaɪ/', category: '问候', tags: ['greeting'] },
-        { word: 'thank', translation: '谢谢', phonetic: '/θæŋk/', category: '礼貌', tags: ['polite'] }
-      ]
-    },
-    {
-      id: 'exam-words',
-      name: '考研核心词汇',
-      description: '考研英语高频词汇，助你轻松应对考试',
-      category: '英语考试',
-      tags: ['考研', 'exam', 'academic'],
-      language: 'en',
-      words: [
-        { word: 'abandon', translation: '放弃，抛弃', phonetic: '/əˈbændən/', category: '考研', tags: ['verb'] },
-        { word: 'ability', translation: '能力，才能', phonetic: '/əˈbɪləti/', category: '考研', tags: ['noun'] },
-        { word: 'absolute', translation: '绝对的，完全的', phonetic: '/ˈæbsəluːt/', category: '考研', tags: ['adjective'] },
-        { word: 'abstract', translation: '抽象的，摘要', phonetic: '/ˈæbstrækt/', category: '考研', tags: ['adjective'] },
-        { word: 'academic', translation: '学术的，理论的', phonetic: '/ˌækəˈdemɪk/', category: '考研', tags: ['adjective'] },
-        { word: 'accept', translation: '接受，承认', phonetic: '/əkˈsept/', category: '考研', tags: ['verb'] },
-        { word: 'access', translation: '接近，通道', phonetic: '/ˈækses/', category: '考研', tags: ['noun'] },
-        { word: 'accident', translation: '事故，意外', phonetic: '/ˈæksɪdənt/', category: '考研', tags: ['noun'] },
-        { word: 'accompany', translation: '陪伴，伴随', phonetic: '/əˈkʌmpəni/', category: '考研', tags: ['verb'] },
-        { word: 'accomplish', translation: '完成，实现', phonetic: '/əˈkʌmplɪʃ/', category: '考研', tags: ['verb'] },
-        { word: 'account', translation: '账户，解释', phonetic: '/əˈkaʊnt/', category: '考研', tags: ['noun'] },
-        { word: 'accurate', translation: '准确的，精确的', phonetic: '/ˈækjərət/', category: '考研', tags: ['adjective'] },
-        { word: 'achieve', translation: '达到，完成', phonetic: '/əˈtʃiːv/', category: '考研', tags: ['verb'] },
-        { word: 'acquire', translation: '获得，学到', phonetic: '/əˈkwaɪər/', category: '考研', tags: ['verb'] },
-        { word: 'action', translation: '行动，作用', phonetic: '/ˈækʃən/', category: '考研', tags: ['noun'] },
-        { word: 'active', translation: '积极的，主动的', phonetic: '/ˈæktɪv/', category: '考研', tags: ['adjective'] },
-        { word: 'actual', translation: '实际的，真实的', phonetic: '/ˈæktʃuəl/', category: '考研', tags: ['adjective'] },
-        { word: 'adapt', translation: '适应，改编', phonetic: '/əˈdæpt/', category: '考研', tags: ['verb'] },
-        { word: 'addition', translation: '加法，增加', phonetic: '/əˈdɪʃən/', category: '考研', tags: ['noun'] },
-        { word: 'adequate', translation: '充足的，适当的', phonetic: '/ˈædɪkwət/', category: '考研', tags: ['adjective'] }
-      ]
+  // 初始化：拉取 manifest 清单（首屏仅加载元数据，不加载词表）
+  const initDictionaries = async () => {
+    if (dictionaries.value.length > 0) return
+    loading.value = true
+    error.value = null
+    try {
+      const res = await fetch('/dictionaries/manifest.json', { cache: 'no-cache' })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const manifest = (await res.json()) as DictionaryManifest
+      dictionaries.value = manifest.dictionaries || []
+    } catch (e: any) {
+      error.value = e?.message || '加载清单失败'
+      console.error('initDictionaries error:', e)
+    } finally {
+      loading.value = false
     }
-  ]
-
-  const initDictionaries = () => {
-    dictionaries.value = sampleDictionaries
   }
 
-  const getDictionaryById = (id: string) => {
-    return dictionaries.value.find(dict => dict.id === id)
-  }
+  // 获取已加载的完整词库（若未加载则返回 undefined）
+  const getDictionaryById = (id: string) => cache.value.get(id)
 
-  const getDictionariesByCategory = (category: string) => {
-    return dictionaries.value.filter(dict => dict.category === category)
-  }
+  // 获取元数据
+  const getMetaById = (id: string) => dictionaries.value.find(m => m.id === id)
 
+  // 按大分类筛选（基于元数据）
+  const getDictionariesByCategory = (category: string) =>
+    dictionaries.value.filter(m => m.category === category)
+
+  // 搜索（基于元数据，不触发词表加载）
   const searchDictionaries = (query: string) => {
-    const lowerQuery = query.toLowerCase()
-    return dictionaries.value.filter(dict => 
-      dict.name.toLowerCase().includes(lowerQuery) ||
-      dict.description.toLowerCase().includes(lowerQuery) ||
-      dict.tags.some(tag => tag.toLowerCase().includes(lowerQuery))
+    const q = query.trim().toLowerCase()
+    if (!q) return dictionaries.value
+    return dictionaries.value.filter(m =>
+      m.name.toLowerCase().includes(q) ||
+      m.description.toLowerCase().includes(q) ||
+      m.category.toLowerCase().includes(q) ||
+      (m.subcategory?.toLowerCase().includes(q) ?? false) ||
+      (m.edition?.toLowerCase().includes(q) ?? false) ||
+      m.tags.some(t => t.toLowerCase().includes(q))
     )
   }
 
+  // 确保词库已加载：若未加载则按 dataPath 拉取词表并转换为 PracticeDictionary
+  const ensureDictionaryLoadedById = async (id: string): Promise<PracticeDictionary | null> => {
+    const cached = cache.value.get(id)
+    if (cached) return cached
+
+    const meta = getMetaById(id)
+    if (!meta) return null
+
+    loading.value = true
+    error.value = null
+    try {
+      const res = await fetch(meta.dataPath, { cache: 'force-cache' })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const payload = (await res.json()) as DictionaryPayload
+
+      const words: PracticeWord[] = (payload.words || []).map(w => ({
+        word: w.word,
+        translation: w.translation,
+        phonetic: w.phonetic,
+        // 优先使用词内分类，其次使用小分类/大分类作为回退
+        category: w.category ?? meta.subcategory ?? meta.category,
+        tags: w.tags ?? meta.tags ?? []
+      }))
+
+      const dict: PracticeDictionary = {
+        id: meta.id,
+        name: meta.name,
+        description: meta.description,
+        category: meta.category,
+        tags: meta.tags,
+        language: meta.language,
+        words
+      }
+
+      cache.value.set(id, dict)
+      return dict
+    } catch (e: any) {
+      error.value = e?.message || '加载词表失败'
+      console.error('ensureDictionaryLoadedById error:', e)
+      return null
+    } finally {
+      loading.value = false
+    }
+  }
+
   return {
+    // 列表（元数据）
     dictionaries,
     loading,
+    error,
+    // 初始化与查询
     initDictionaries,
-    getDictionaryById,
+    getMetaById,
     getDictionariesByCategory,
-    searchDictionaries
+    searchDictionaries,
+    // 词表加载与获取
+    ensureDictionaryLoadedById,
+    getDictionaryById
   }
 })

@@ -56,12 +56,14 @@
                 <h3 class="text-lg font-semibold group-hover:text-coral-500 transition-colors duration-200">
                   {{ dictionary.name }}
                 </h3>
-                <span class="text-sm opacity-60">{{ dictionary.category }}</span>
+                <span class="text-sm opacity-60">
+                  {{ dictionary.category }}<template v-if="dictionary.subcategory"> · {{ dictionary.subcategory }}</template><template v-if="dictionary.edition"> · {{ dictionary.edition }}</template>
+                </span>
               </div>
             </div>
 
             <div class="text-sm opacity-60">
-              {{ dictionary.words.length }} 词
+              {{ dictionary.wordCount }} 词
             </div>
           </div>
 
@@ -129,13 +131,11 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useThemeStore } from '@/stores/theme'
 import { useDictionaryStore } from '@/stores/dictionary'
-import { usePracticeStore } from '@/stores/practice'
-import type { Dictionary } from '@/stores/practice'
+import type { DictionaryMeta } from '@/types/dictionary'
 
 const router = useRouter()
 const themeStore = useThemeStore()
 const dictionaryStore = useDictionaryStore()
-const practiceStore = usePracticeStore()
 
 const searchQuery = ref('')
 const selectedCategory = ref('')
@@ -183,8 +183,7 @@ const getLanguageName = (lang: string) => {
   return langMap[lang] || lang
 }
 
-const startPractice = (dictionary: Dictionary) => {
-  practiceStore.setDictionary(dictionary)
+const startPractice = (dictionary: DictionaryMeta) => {
   router.push({ name: 'Practice', params: { id: dictionary.id } })
 }
 
