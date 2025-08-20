@@ -21,6 +21,10 @@ export function useKeyboardShortcuts(
     isCompleted: boolean
     availableChaptersLength: number
     currentChapter: number
+  },
+  getCurrentWordInfo?: () => {
+    currentWord: { word: string } | null
+    userInput: string
   }
 ) {
   // 防止章节切换后立即处理键盘事件的标志
@@ -69,6 +73,28 @@ export function useKeyboardShortcuts(
     if (event.key === 'Tab' && !state.showSettings && !state.isPaused) {
       handlers.onSkipWord()
       event.preventDefault()
+      return
+    }
+
+    // 空格键 - 需要检查是否应该输入空格字符
+    if (event.key === ' ' && !state.showSettings && !state.isPaused) {
+      // 如果有获取当前单词信息的函数，检查是否需要输入空格
+      if (getCurrentWordInfo) {
+        const wordInfo = getCurrentWordInfo()
+        if (wordInfo.currentWord && wordInfo.userInput.length < wordInfo.currentWord.word.length) {
+          const expectedChar = wordInfo.currentWord.word[wordInfo.userInput.length]
+          if (expectedChar === ' ') {
+            // 当前位置需要输入空格，不跳过单词
+            return
+          }
+        }
+      }
+      
+      // 只有在不是输入状态时才跳过单词
+      if (!isInputFocused) {
+        handlers.onSkipWord()
+        event.preventDefault()
+      }
       return
     }
 

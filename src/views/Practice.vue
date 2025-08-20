@@ -336,6 +336,9 @@ useKeyboardShortcuts({
     isCompleted: isCompleted.value,
     availableChaptersLength: availableChapters.value.length,
     currentChapter: currentChapter.value
+}), () => ({
+    currentWord: currentWord.value,
+    userInput: userInput.value
 }))
 
 onMounted(async () => {
