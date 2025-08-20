@@ -138,6 +138,15 @@ export function usePracticeInput() {
     }
 
     if (event.key === ' ') {
+      // 检查当前是否需要输入空格字符
+      if (currentWord.value && userInput.value.length < currentWord.value.word.length) {
+        const expectedChar = currentWord.value.word[userInput.value.length]
+        if (expectedChar === ' ') {
+          // 当前位置需要输入空格，不跳过单词，让正常输入处理
+          return
+        }
+      }
+      // 否则跳过单词
       event.preventDefault()
       onSkipWord()
     }

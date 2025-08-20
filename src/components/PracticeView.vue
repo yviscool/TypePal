@@ -43,7 +43,7 @@
             <span v-for="(char, index) in currentWord.word" :key="index" :class="getCharClass(index)"
               class="inline-block transition-all duration-300 ease-out transform hover:scale-110"
               :style="getCharStyle(index)">
-              {{ char }}
+              {{ char === ' ' ? '␣' : char }}
             </span>
           </div>
         </div>
