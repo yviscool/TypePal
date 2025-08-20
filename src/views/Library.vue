@@ -23,19 +23,62 @@
     <div class="max-w-6xl mx-auto mb-8">
       <div class="flex flex-col sm:flex-row gap-4">
         <div class="flex-1 relative">
-          <div class="absolute left-3 top-1/2 transform -translate-y-1/2 i-ph-magnifying-glass text-xl opacity-50">
+          <div class="absolute z-[100] left-3 top-1/2 transform -translate-y-1/2 i-ph-magnifying-glass text-xl opacity-50">
           </div>
           <input v-model="searchQuery" type="text" placeholder="搜索词库名称、描述或标签..."
-            class="w-full pl-12 pr-4 py-3 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 focus:border-coral-500 focus:outline-none transition-colors duration-200">
+            class="w-full pl-12 pr-4 py-3 rounded-xl bg-white/10 backdrop-blur-sm border border-gray-300 dark:border-white/20 focus:border-coral-500 focus:outline-none transition-colors duration-200">
         </div>
 
-        <select v-model="selectedCategory"
-          class="px-4 py-3 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 focus:border-coral-500 focus:outline-none">
-          <option value="">所有分类</option>
-          <option v-for="category in categories" :key="category" :value="category">
-            {{ category }}
-          </option>
-        </select>
+      </div>
+    </div>
+
+    <!-- 分类与标签筛选 -->
+    <div class="max-w-6xl mx-auto mb-6">
+      <!-- 大分类 Tab -->
+      <div class="flex flex-wrap items-center gap-2 mb-4">
+        <button
+          :class="['px-3 py-1.5 rounded-full text-sm border', activeCategory === '' ? 'bg-coral-500 text-white border-coral-500 shadow-md' : 'bg-white/10 border-white/20 hover:bg-white/20']"
+          @click="setActiveCategory('')">
+          <span class="inline-flex items-center gap-1">
+            <div :class="getCategoryTabIcon('全部')" class="text-base"></div>
+            <span>全部</span>
+          </span>
+        </button>
+        <button v-for="cat in categories" :key="cat"
+          :class="['px-3 py-1.5 rounded-full text-sm border', activeCategory === cat ? 'bg-coral-500 text-white border-coral-500 shadow-md' : 'bg-white/10 border-white/20 hover:bg-white/20']"
+          @click="setActiveCategory(cat)">
+          <span class="inline-flex items-center gap-1">
+            <div :class="getCategoryTabIcon(cat)" class="text-base"></div>
+            <span>{{ cat }}</span>
+          </span>
+        </button>
+      </div>
+
+      <!-- 小分类与标签 Chips（选择具体大分类后展示） -->
+      <div v-if="activeCategory" class="flex flex-wrap items-center gap-2">
+        <button
+          :class="['px-3 py-1.5 rounded-full text-xs border', selectedSubcategory === '' ? 'bg-coral-500 text-white border-coral-500 shadow' : 'bg-white/10 border-white/20 hover:bg-white/20']"
+          @click="selectedSubcategory = ''">
+          全部{{ activeCategory }}
+        </button>
+        <button v-for="sub in subcategories" :key="sub"
+          :class="['px-3 py-1.5 rounded-full text-xs border', selectedSubcategory === sub ? 'bg-coral-500 text-white border-coral-500 shadow' : 'bg-white/10 border-white/20 hover:bg-white/20']"
+          @click="toggleSubcategory(sub)">
+          {{ sub }}
+        </button>
+
+        <span class="opacity-50 mx-2">|</span>
+
+        <button v-for="tag in availableTags" :key="tag"
+          :class="['px-3 py-1.5 rounded-full text-xs border', selectedTags.includes(tag) ? 'bg-coral-500 text-white border-coral-500 shadow' : 'bg-white/10 border-white/20 hover:bg-white/20']"
+          @click="toggleTag(tag)">
+          #{{ tag }}
+        </button>
+      </div>
+      <div v-if="activeCategory && (selectedSubcategory || selectedTags.length)" class="mt-2 text-xs opacity-80 flex flex-wrap items-center gap-2">
+        <span v-if="selectedSubcategory">已选小分类：<span class="font-medium text-coral-500">{{ selectedSubcategory }}</span></span>
+        <span v-if="selectedTags.length">已选标签：<span class="font-medium text-coral-500">{{ selectedTags.join('、') }}</span></span>
+        <button class="px-2 py-1 rounded bg-white/10 border border-white/20 hover:bg-white/20" @click="clearFilters">清除筛选</button>
       </div>
     </div>
 
@@ -138,7 +181,50 @@ const themeStore = useThemeStore()
 const dictionaryStore = useDictionaryStore()
 
 const searchQuery = ref('')
-const selectedCategory = ref('')
+const activeCategory = ref('')
+const selectedSubcategory = ref('')
+const selectedTags = ref<string[]>([])
+
+const subcategories = computed(() => {
+  if (!activeCategory.value) return []
+  const set = new Set<string>()
+  dictionaryStore.dictionaries.forEach(d => {
+    if (d.category === activeCategory.value && d.subcategory) {
+      set.add(d.subcategory)
+    }
+  })
+  return Array.from(set)
+})
+
+const availableTags = computed(() => {
+  if (!activeCategory.value) return []
+  const set = new Set<string>()
+  dictionaryStore.dictionaries.forEach(d => {
+    if (d.category === activeCategory.value && d.tags) {
+      d.tags.forEach(t => set.add(t))
+    }
+  })
+  return Array.from(set).slice(0, 12)
+})
+
+const setActiveCategory = (cat: string) => {
+  activeCategory.value = cat
+  selectedSubcategory.value = ''
+  selectedTags.value = []
+}
+const toggleSubcategory = (sub: string) => {
+  selectedSubcategory.value = selectedSubcategory.value === sub ? '' : sub
+}
+const toggleTag = (tag: string) => {
+  const i = selectedTags.value.indexOf(tag)
+  if (i === -1) selectedTags.value.push(tag)
+  else selectedTags.value.splice(i, 1)
+}
+
+const clearFilters = () => {
+  selectedSubcategory.value = ''
+  selectedTags.value = []
+}
 
 const categories = computed(() => {
   const cats = new Set(dictionaryStore.dictionaries.map(dict => dict.category))
@@ -146,26 +232,56 @@ const categories = computed(() => {
 })
 
 const filteredDictionaries = computed(() => {
-  let result = dictionaryStore.dictionaries
+  let list = dictionaryStore.dictionaries
 
   if (searchQuery.value) {
-    result = dictionaryStore.searchDictionaries(searchQuery.value)
+    list = dictionaryStore.searchDictionaries(searchQuery.value)
   }
 
-  if (selectedCategory.value) {
-    result = result.filter(dict => dict.category === selectedCategory.value)
+  if (activeCategory.value) {
+    list = list.filter(d => d.category === activeCategory.value)
   }
 
-  return result
+  if (selectedSubcategory.value) {
+    list = list.filter(d => d.subcategory === selectedSubcategory.value)
+  }
+
+  if (selectedTags.value.length > 0) {
+    list = list.filter(d => {
+      const tags = d.tags || []
+      return selectedTags.value.some(t => tags.includes(t))
+    })
+  }
+
+  return list
 })
 
 const getCategoryIcon = (category: string) => {
   const iconMap: Record<string, string> = {
     '编程': 'i-ph-code',
+    '英语': 'i-ph-translate',
     '英语考试': 'i-ph-graduation-cap',
     '生活常用': 'i-ph-house',
     '商务英语': 'i-ph-briefcase',
     '旅行': 'i-ph-airplane'
+  }
+  return iconMap[category] || 'i-ph-book'
+}
+
+const getCategoryTabIcon = (category: string) => {
+  const iconMap: Record<string, string> = {
+    '全部': 'i-ph-books',
+    '编程': 'i-ph-code',
+    '英语': 'i-ph-translate',
+    '日语': 'i-ph-flag',
+    '德语': 'i-ph-flag',
+    '印尼语': 'i-ph-flag',
+    '哈萨克语': 'i-ph-flag',
+    '法语': 'i-ph-flag',
+    '西班牙语': 'i-ph-flag',
+    '俄语': 'i-ph-flag',
+    '阿拉伯语': 'i-ph-flag',
+    '韩语': 'i-ph-flag'
   }
   return iconMap[category] || 'i-ph-book'
 }
@@ -176,8 +292,12 @@ const getLanguageName = (lang: string) => {
     'zh': '中文',
     'ja': '日语',
     'de': '德语',
+    'fr': '法语',
+    'es': '西班牙语',
+    'ru': '俄语',
+    'ar': '阿拉伯语',
+    'ko': '韩语',
     'id': '印尼语',
-    'hapin': '哈萨克语',
     'kk': '哈萨克语'
   }
   return langMap[lang] || lang

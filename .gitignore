@@ -175,3 +175,4 @@ dist
 **/.vitepress/cache
 **/.vitepress/dist
 .cursor/*
+.codebuddy/*

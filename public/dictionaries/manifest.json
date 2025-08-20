@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2025-08-20T12:50:00Z",
+  "generatedAt": "2025-08-20T13:50:00Z",
   "dictionaries": [
     {
       "id": "prog-common",
@@ -34,6 +34,42 @@
       "language": "en",
       "wordCount": 30,
       "dataPath": "/dictionaries/programming/cpp/prog-cpp.json"
+    },
+    {
+      "id": "child-cpp",
+      "name": "少儿编程·C++",
+      "description": "少儿编程C++基础词汇与概念",
+      "category": "编程",
+      "subcategory": "少儿编程",
+      "edition": "C++",
+      "tags": ["children", "programming", "cpp", "beginner"],
+      "language": "en",
+      "wordCount": 73,
+      "dataPath": "/dictionaries/programming/child/child-cpp.json"
+    },
+    {
+      "id": "child-python",
+      "name": "少儿编程·Python",
+      "description": "少儿编程Python基础词汇与概念",
+      "category": "编程",
+      "subcategory": "少儿编程",
+      "edition": "Python",
+      "tags": ["children", "programming", "python", "beginner"],
+      "language": "en",
+      "wordCount": 66,
+      "dataPath": "/dictionaries/programming/child/child-python.json"
+    },
+    {
+      "id": "child-python-turtle",
+      "name": "少儿编程·Python Turtle",
+      "description": "Python Turtle图形编程基础词汇",
+      "category": "编程",
+      "subcategory": "少儿编程",
+      "edition": "Python Turtle",
+      "tags": ["children", "programming", "python", "turtle", "graphics"],
+      "language": "en",
+      "wordCount": 35,
+      "dataPath": "/dictionaries/programming/child/child-python-turtle.json"
     },
     {
       "id": "en-primary-renjiao",
@@ -70,6 +106,102 @@
       "language": "en",
       "wordCount": 30,
       "dataPath": "/dictionaries/english/middle/en-middle-yilin.json"
+    },
+    {
+      "id": "yilin-grade3-1",
+      "name": "英语·小学·译林版·三年级上",
+      "description": "译林版小学英语三年级上册词汇",
+      "category": "英语",
+      "subcategory": "小学",
+      "edition": "译林版三年级上",
+      "tags": ["primary", "yilin", "grade3"],
+      "language": "en",
+      "wordCount": 80,
+      "dataPath": "/dictionaries/english/yilin/grade3-1.json"
+    },
+    {
+      "id": "yilin-grade3-2",
+      "name": "英语·小学·译林版·三年级下",
+      "description": "译林版小学英语三年级下册词汇",
+      "category": "英语",
+      "subcategory": "小学",
+      "edition": "译林版三年级下",
+      "tags": ["primary", "yilin", "grade3"],
+      "language": "en",
+      "wordCount": 85,
+      "dataPath": "/dictionaries/english/yilin/grade3-2.json"
+    },
+    {
+      "id": "yilin-grade4-1",
+      "name": "英语·小学·译林版·四年级上",
+      "description": "译林版小学英语四年级上册词汇",
+      "category": "英语",
+      "subcategory": "小学",
+      "edition": "译林版四年级上",
+      "tags": ["primary", "yilin", "grade4"],
+      "language": "en",
+      "wordCount": 90,
+      "dataPath": "/dictionaries/english/yilin/grade4-1.json"
+    },
+    {
+      "id": "yilin-grade4-2",
+      "name": "英语·小学·译林版·四年级下",
+      "description": "译林版小学英语四年级下册词汇",
+      "category": "英语",
+      "subcategory": "小学",
+      "edition": "译林版四年级下",
+      "tags": ["primary", "yilin", "grade4"],
+      "language": "en",
+      "wordCount": 95,
+      "dataPath": "/dictionaries/english/yilin/grade4-2.json"
+    },
+    {
+      "id": "yilin-grade5-1",
+      "name": "英语·小学·译林版·五年级上",
+      "description": "译林版小学英语五年级上册词汇",
+      "category": "英语",
+      "subcategory": "小学",
+      "edition": "译林版五年级上",
+      "tags": ["primary", "yilin", "grade5"],
+      "language": "en",
+      "wordCount": 100,
+      "dataPath": "/dictionaries/english/yilin/grade5-1.json"
+    },
+    {
+      "id": "yilin-grade5-2",
+      "name": "英语·小学·译林版·五年级下",
+      "description": "译林版小学英语五年级下册词汇",
+      "category": "英语",
+      "subcategory": "小学",
+      "edition": "译林版五年级下",
+      "tags": ["primary", "yilin", "grade5"],
+      "language": "en",
+      "wordCount": 105,
+      "dataPath": "/dictionaries/english/yilin/grade5-2.json"
+    },
+    {
+      "id": "yilin-grade6-1",
+      "name": "英语·小学·译林版·六年级上",
+      "description": "译林版小学英语六年级上册词汇",
+      "category": "英语",
+      "subcategory": "小学",
+      "edition": "译林版六年级上",
+      "tags": ["primary", "yilin", "grade6"],
+      "language": "en",
+      "wordCount": 110,
+      "dataPath": "/dictionaries/english/yilin/grade6-1.json"
+    },
+    {
+      "id": "yilin-grade6-2",
+      "name": "英语·小学·译林版·六年级下",
+      "description": "译林版小学英语六年级下册词汇",
+      "category": "英语",
+      "subcategory": "小学",
+      "edition": "译林版六年级下",
+      "tags": ["primary", "yilin", "grade6"],
+      "language": "en",
+      "wordCount": 115,
+      "dataPath": "/dictionaries/english/yilin/grade6-2.json"
     }
   ]
 }
