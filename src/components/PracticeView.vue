@@ -38,22 +38,23 @@
 
         <!-- 单词显示区域 - 完全居中 -->
         <div class="flex justify-center mb-8">
-          <div class="text-7xl md:text-8xl font-bold tracking-wider select-none flex items-center relative"
-            :class="{ 'animate-word-shake': errorMessage }">
-            <span v-for="(char, index) in currentWord.word" :key="index" :class="getCharClass(index)"
-              class="inline-block transition-all duration-300 ease-out transform hover:scale-110"
-              :style="getCharStyle(index)">
-              {{ char === ' ' ? '␣' : char }}
-            </span>
+          <div class="relative inline-block">
+            <div class="text-7xl md:text-8xl font-bold tracking-wider select-none flex items-center"
+              :class="{ 'animate-word-shake': errorMessage }">
+              <span v-for="(char, index) in currentWord.word" :key="index" :class="getCharClass(index)"
+                class="inline-block transition-all duration-300 ease-out transform hover:scale-110"
+                :style="getCharStyle(index)">
+                {{ char === ' ' ? '␣' : char }}
+              </span>
+            </div>
+            <!-- 发音按钮：始终在单词容器右侧 -->
+            <button @click="$emit('playPronunciation')"
+              class="absolute top-1/2 -translate-y-1/2 left-full ml-4 p-4 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20 hover:scale-110 transition-all duration-300 group shadow-lg"
+              title="播放发音">
+              <div class="i-ph-speaker-high text-2xl group-hover:animate-pulse text-coral-400"></div>
+            </button>
           </div>
         </div>
-
-        <!-- 发音按钮 - 绝对定位到右上角 -->
-        <button @click="$emit('playPronunciation')"
-          class="absolute top-4 right-4 md:right-8 p-4 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20 hover:scale-110 transition-all duration-300 group shadow-lg"
-          title="播放发音">
-          <div class="i-ph-speaker-high text-2xl group-hover:animate-pulse text-coral-400"></div>
-        </button>
 
         <!-- 音标 -->
         <div v-if="currentWord.phonetic && !settings.dictationMode"
