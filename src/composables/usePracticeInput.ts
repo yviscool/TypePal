@@ -50,8 +50,8 @@ export function usePracticeInput() {
     // 检查当前输入的字符是否正确
     if (newValue.length > 0) {
       const currentIndex = newValue.length - 1
-      const currentChar = newValue[currentIndex]
-      const expectedChar = currentWord.value.word[currentIndex]
+      const currentChar = newValue[currentIndex].toLowerCase()
+      const expectedChar = currentWord.value.word[currentIndex].toLowerCase()
 
       if (currentChar !== expectedChar) {
         // 根据练习模式处理错误
@@ -75,7 +75,7 @@ export function usePracticeInput() {
       } else {
         // 正确输入，检查是否完成单词
         if (newValue.length === currentWord.value.word.length) {
-          const isWordComplete = newValue === currentWord.value.word
+          const isWordComplete = newValue.toLowerCase() === currentWord.value.word.toLowerCase()
 
           if (isWordComplete) {
             successMessage.value = '完美！'

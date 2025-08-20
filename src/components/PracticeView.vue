@@ -247,8 +247,8 @@ const getCharClass = (index: number) => {
     return 'text-gray-400 dark:text-gray-500'
   }
 
-  const userChar = props.userInput[index]
-  const correctChar = props.currentWord?.word[index]
+  const userChar = props.userInput[index].toLowerCase()
+  const correctChar = props.currentWord?.word[index].toLowerCase()
 
   if (userChar === correctChar) {
     return 'text-white bg-green-500 rounded-md px-1 shadow-lg'
@@ -262,8 +262,8 @@ const getCharStyle = (index: number) => {
     return {}
   }
 
-  const userChar = props.userInput[index]
-  const correctChar = props.currentWord?.word[index]
+  const userChar = props.userInput[index].toLowerCase()
+  const correctChar = props.currentWord?.word[index].toLowerCase()
 
   if (userChar === correctChar) {
     return {
