@@ -39,7 +39,7 @@
         <!-- 连击数字 -->
         <div class="relative font-black tracking-tighter leading-none my-2 select-none"
           :class="[stageClasses.number, idleAnimationClass.number, { 'animate-number-impact': animationState !== 'idle' }]"
-          style="font-feature-settings: 'kern' 1, 'liga' 0; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;">
+          style="font-feature-settings: 'kern' 1, 'liga' 0; font-variant-numeric: tabular-nums lining-nums; text-rendering: geometricPrecision; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;">
           {{ comboCount }}
         </div>
 
@@ -80,8 +80,8 @@
 
       <!-- 神圣光柱 -->
       <div v-if="stage >= 7 && animationState !== 'idle'" class="absolute inset-0 pointer-events-none">
-        <div class="absolute left-1/2 top-0 w-2 h-full bg-gradient-to-b from-transparent via-white to-transparent opacity-60 animate-divine-beam transform -translate-x-1/2"></div>
-        <div class="absolute left-0 top-1/2 w-full h-2 bg-gradient-to-r from-transparent via-white to-transparent opacity-60 animate-divine-beam transform -translate-y-1/2"></div>
+        <div class="absolute left-1/2 top-0 w-2 h-full bg-gradient-to-b from-transparent via-white to-transparent opacity-60 animate-divine-beam beam-hole transform -translate-x-1/2"></div>
+        <div class="absolute left-0 top-1/2 w-full h-2 bg-gradient-to-r from-transparent via-white to-transparent opacity-60 animate-divine-beam beam-hole transform -translate-y-1/2"></div>
       </div>
 
       <!-- 终极光环 -->
@@ -232,7 +232,7 @@ const stageClasses = computed(() => {
     case 8: // 返璞归真 - 太极阴阳
       return {
         label: 'text-gray-900 text-2xl font-light tracking-[0.6em] taiji-glow',
-        number: 'text-9xl text-gray-900 font-thin taiji-number-glow',
+        number: 'text-9xl text-gray-900 font-black taiji-number-glow',
         rank: 'text-gray-800 text-3xl font-light tracking-[0.4em] taiji-glow',
         flare: 'taiji-flare',
         particle: 'bg-gray-900 taiji-particle',
@@ -650,6 +650,10 @@ const shardStyles = computed(() => {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+/* 标签清晰度提升（非数字） */
+[class*="glow"]:not([class*="number-glow"]) {
+  -webkit-text-stroke: 0.4px rgba(0, 0, 0, 0.25);
+}
 
 /* =================================================================== */
 /* 待机动画 */
@@ -914,7 +918,7 @@ const shardStyles = computed(() => {
 @keyframes number-impact {
   30% { text-shadow: 0 0 10px rgba(255, 255, 255, 0.6), 0 0 20px var(--glow-color, rgba(255, 255, 255, 0.4)); }
 }
-.animate-number-impact { animation: number-impact 1.2s ease-out; }
+.animate-number-impact { animation: number-impact 1.2s ease-out both; will-change: text-shadow; }
 
 @keyframes rank-impact {
   0% { transform: translateY(0) scale(1); opacity: 0; }
