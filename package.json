@@ -4,8 +4,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc && vite build",
-    "preview": "vite preview"
+    "dev:host": "vite --host",
+    "type-check": "vue-tsc --noEmit",
+    "prebuild": "npm run type-check",
+    "build": "vite build",
+    "preview": "vite preview",
+    "preview:host": "vite preview --host"
   },
   "dependencies": {
     "@tsparticles/slim": "^3.9.1",
