@@ -204,7 +204,7 @@
 import { ref } from 'vue'
 import ComboDisplay from './ComboDisplay.vue'
 import PracticeStats from './PracticeStats.vue'
-import type { Word, PracticeSettings } from '@/stores/practice'
+import type { Word, PracticeSettings } from '@/types/practice'
 
 interface Props {
   currentWord: Word | null

@@ -1,5 +1,5 @@
 import { ref, computed } from 'vue'
-import type { PracticeSettings } from '@/stores/practice'
+import type { PracticeSettings } from '@/types/practice'
 
 export function useComboSystem(settings?: () => PracticeSettings) {
   const comboCount = ref(0)

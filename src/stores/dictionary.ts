@@ -10,7 +10,7 @@ export const useDictionaryStore = defineStore('dictionary', () => {
   const loading = ref(false)
   const error = ref<string | null>(null)
   // 已加载词表缓存（避免重复请求）
-  const cache = ref<Map<string, PracticeDictionary>>(new Map())
+  const cache = ref<Map<string, Dictionary>>(new Map())
 
   // 初始化：拉取 manifest 清单（首屏仅加载元数据，不加载词表）
   const initDictionaries = async () => {
@@ -55,7 +55,7 @@ export const useDictionaryStore = defineStore('dictionary', () => {
   }
 
   // 确保词库已加载：若未加载则按 dataPath 拉取词表并转换为 PracticeDictionary
-  const ensureDictionaryLoadedById = async (id: string): Promise<PracticeDictionary | null> => {
+  const ensureDictionaryLoadedById = async (id: string): Promise<Dictionary | null> => {
     const cached = cache.value.get(id)
     if (cached) return cached
 

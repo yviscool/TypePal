@@ -23,6 +23,7 @@ export function useParticles(theme: ComputedRef<ParticleTheme>) {
           enable: true,
           mode: 'repulse'
         },
+        // @ts-ignore
         resize: true
       },
       modes: {
@@ -59,6 +60,7 @@ export function useParticles(theme: ComputedRef<ParticleTheme>) {
       number: {
         density: {
           enable: true,
+          // @ts-ignore
           area: 800
         },
         value: 50
@@ -72,6 +74,7 @@ export function useParticles(theme: ComputedRef<ParticleTheme>) {
         animation: {
           enable: true,
           speed: 1,
+          // @ts-ignore
           minimumValue: 0.1,
           sync: false
         }
@@ -88,6 +91,7 @@ export function useParticles(theme: ComputedRef<ParticleTheme>) {
         animation: {
           enable: true,
           speed: 2,
+          // @ts-ignore
           minimumValue: 1,
           sync: false
         }
@@ -112,6 +116,7 @@ export function useParticles(theme: ComputedRef<ParticleTheme>) {
         speed: 2
       },
       links: {
+        // @ts-ignore
         ...baseOptions.value.particles?.links,
         opacity: 0.4
       }

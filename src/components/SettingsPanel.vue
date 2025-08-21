@@ -289,7 +289,7 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import type { PracticeSettings } from '@/stores/practice'
+import type { PracticeSettings } from '@/types/practice'
 
 interface Props {
   show: boolean
