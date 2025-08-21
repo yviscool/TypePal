@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import type { Dictionary as PracticeDictionary, Word as PracticeWord } from './practice'
+import type { Dictionary, Word } from '@/types/practice'
 import type { DictionaryMeta, DictionaryManifest, DictionaryPayload } from '@/types/dictionary'
 
 export const useDictionaryStore = defineStore('dictionary', () => {
@@ -69,7 +69,7 @@ export const useDictionaryStore = defineStore('dictionary', () => {
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const payload = (await res.json()) as DictionaryPayload
 
-      const words: PracticeWord[] = (payload.words || []).map(w => ({
+      const words: Word[] = (payload.words || []).map(w => ({
         word: w.word,
         translation: w.translation,
         phonetic: w.phonetic,
@@ -78,7 +78,7 @@ export const useDictionaryStore = defineStore('dictionary', () => {
         tags: w.tags ?? meta.tags ?? []
       }))
 
-      const dict: PracticeDictionary = {
+      const dict: Dictionary = {
         id: meta.id,
         name: meta.name,
         description: meta.description,

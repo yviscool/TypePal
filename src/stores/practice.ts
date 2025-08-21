@@ -1,40 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-// 单词接口定义
-export interface Word {
-  word: string // 单词文本
-  translation: string // 翻译
-  phonetic?: string // 音标（可选）
-  category: string // 分类
-  tags: string[] // 标签数组
-}
-
-// 词典接口定义
-export interface Dictionary {
-  id: string // 词典唯一标识
-  name: string // 词典名称
-  description: string // 词典描述
-  category: string // 词典分类
-  tags: string[] // 词典标签
-  words: Word[] // 单词列表
-  language: 'en' | 'zh' | 'ja' | 'de' | 'id' | 'hapin' | 'kk' // 语言类型
-}
-
-// 练习设置接口定义
-export interface PracticeSettings {
-  pronunciation: 'us' | 'uk' | 'romaji' | 'zh' | 'ja' | 'de' | 'hapin' | 'kk' | 'id' // 发音类型
-  showTranslation: boolean // 是否显示翻译
-  loopOnError: boolean // 错误时是否循环
-  dictationMode: boolean // 听写模式
-  soundEnabled: boolean // 是否启用声音
-  practiceMode: 'normal' | 'strict' | 'hardcore' // 练习模式
-  wordLoopCount: '1' | '3' | '5' | '8' | 'infinite' // 单词循环次数
-  comboEffectsLevel: 'none' | 'simple' | 'gorgeous' // 连击特效级别
-}
-
-// 单词状态类型定义
-// 未触及 | 当前 | 已完成 | 已跳过 | 错误
-export type WordStatus = 'untouched' | 'current' | 'completed' | 'skipped' | 'error' 
+import type { Word, Dictionary, PracticeSettings, WordStatus } from '@/types/practice'
 
 export const usePracticeStore = defineStore('practice', () => {
   // 状态
@@ -212,8 +178,6 @@ export const usePracticeStore = defineStore('practice', () => {
     const words = currentChapterWords.value
     if (currentWordIndex.value < words.length - 1) {
       currentWordIndex.value++
-      // 更新新的当前单词状态
-      updateWordStatusCache(currentWordIndex.value)
       userInput.value = ''
     } else {
       completeChapter()
