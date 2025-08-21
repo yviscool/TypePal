@@ -24,8 +24,8 @@
             :current-chapter-words="currentChapterWords" :user-input="userInput" :settings="settings"
             :current-word-loop-progress="currentWordLoopProgress" :get-word-status="getWordStatus" :is-paused="isPaused"
             :is-completed="isCompleted" :current-time="timer.currentTime.value" :correct-count="correctCount"
-            :current-wpm="timer.currentWpm.value" :accuracy="accuracy" :error-message="inputHandler.errorMessage.value"
-            :success-message="inputHandler.successMessage.value" :combo-count="comboSystem.comboCount.value"
+            :current-wpm="currentWpm" :accuracy="accuracy" :error-message="errorMessage"
+            :success-message="successMessage" :combo-count="comboSystem.comboCount.value"
             :show-combo="comboSystem.showCombo.value" @previous-word="previousWord" @skip-word="skipWord"
             @play-pronunciation="playPronunciation" @input="handleInput" @keydown="handleKeydown"
             ref="practiceViewRef" />
@@ -59,7 +59,6 @@ import PracticeView from '@/components/PracticeView.vue'
 import CompletionReport from '@/components/CompletionReport.vue'
 
 // Import composables
-import { usePracticeInput } from '@/composables/usePracticeInput'
 import { useComboSystem } from '@/composables/useComboSystem'
 import { usePracticeTimer } from '@/composables/usePracticeTimer'
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts'
@@ -77,8 +76,11 @@ const practiceViewRef = ref()
 const showSettings = ref(false)
 const isPaused = ref(false)
 
+// 消息状态
+const errorMessage = ref('')
+const successMessage = ref('')
+
 // 使用组合式函数
-const inputHandler = usePracticeInput()
 const comboSystem = useComboSystem(() => settings.value)
 const timer = usePracticeTimer()
 
@@ -90,6 +92,7 @@ const {
     userInput,
     isCompleted,
     correctCount,
+    totalCount,
     wpm,
     accuracy,
     settings,
@@ -98,9 +101,11 @@ const {
     progress,
     startTime,
     endTime,
-    currentWordLoopProgress,
-    getWordStatus
+    currentWordLoopProgress
 } = storeToRefs(practiceStore)
+
+// 重要：getWordStatus 是普通函数，不能通过 storeToRefs 解构
+const getWordStatus = practiceStore.getWordStatus
 
 // 计算属性
 const availableChapters = computed(() => {
@@ -121,33 +126,182 @@ const practiceTime = computed(() => {
     return endTime.value - startTime.value
 })
 
-// 事件处理函数
+// 修复 WPM 计算 - 基于正确输入的字符数
+const currentWpm = computed(() => {
+    if (!startTime.value || timer.currentTime.value === 0 || correctCount.value === 0) return 0
+    const minutes = timer.currentTime.value / 60000
+    // WPM = 正确字符数 / 5 / 分钟数 (标准WPM计算方式)
+    const totalChars = correctCount.value * (currentWord.value?.word.length || 5)
+    return Math.round((totalChars / 5) / minutes)
+})
+
+// 消息管理函数
+const clearMessages = () => {
+    errorMessage.value = ''
+    successMessage.value = ''
+}
+
+const setMessage = (message: string, isError: boolean, duration: number) => {
+    clearMessages()
+    if (isError) {
+        errorMessage.value = message
+    } else {
+        successMessage.value = message
+    }
+    setTimeout(clearMessages, duration)
+}
+
+// 事件处理函数 - 修复统计逻辑
 const handleInput = (event: Event) => {
-    inputHandler.onInput(
-        event,
-        () => comboSystem.incrementCombo((_count, message) => {
-            inputHandler.successMessage.value = message
-            setTimeout(() => inputHandler.clearMessages(), 1500)
-        }),
-        () => {
-            const previousCount = comboSystem.resetCombo()
-            if (previousCount >= 3) {
-                inputHandler.errorMessage.value = `💔 连击中断！之前连击 x${previousCount}`
-            }
-        },
-        () => timer.startTimer(() => isPaused.value || showSettings.value),
-        () => {
-            // 单词完成后播放下一个单词的发音（仅在章节未完成时）
-            if (settings.value.soundEnabled && currentWord.value && !isCompleted.value) {
-                playPronunciation()
-            }
+    if (!currentWord.value) return
+
+    const target = event.target as HTMLInputElement
+    const newValue = target.value
+
+    // 更新 store 中的 userInput
+    userInput.value = newValue
+
+    // 开始计时（仅在首次输入时）
+    if (!startTime.value) {
+        practiceStore.startPractice()
+        timer.initializeTimer()
+        timer.startTimer(() => isPaused.value || showSettings.value)
+    }
+
+    // 快速路径：空输入直接返回
+    if (newValue.length === 0) {
+        clearMessages()
+        return
+    }
+
+    // 字符验证
+    const currentWordValue = currentWord.value
+    const currentWordLength = currentWordValue.word.length
+
+    // 限制输入长度
+    if (newValue.length > currentWordLength) {
+        const trimmedValue = newValue.slice(0, currentWordLength)
+        target.value = trimmedValue
+        userInput.value = trimmedValue
+        return
+    }
+
+    // 检查字符正确性
+    const currentIndex = newValue.length - 1
+    const currentChar = newValue[currentIndex].toLowerCase()
+    const expectedChar = currentWordValue.word[currentIndex].toLowerCase()
+
+    if (currentChar !== expectedChar) {
+        // 错误处理
+        practiceStore.markWordError(currentWordIndex.value)
+        handleInputError()
+    } else if (newValue.length === currentWordLength) {
+        // 单词完成检查
+        const isWordComplete = newValue.toLowerCase() === currentWordValue.word.toLowerCase()
+        
+        if (isWordComplete) {
+            handleWordComplete()
+        } else {
+            handleWordIncomplete()
         }
-    )
+    }
+}
+
+const handleInputError = () => {
+    const mode = settings.value.practiceMode
+    
+    if (mode === 'hardcore') {
+        setMessage('💥 硬核模式：全部重来！', true, 800)
+        setTimeout(() => {
+            practiceStore.resetChapter()
+            timer.resetTimer()
+        }, 50)
+        comboSystem.resetCombo()
+    } else if (mode === 'strict') {
+        setMessage('⚡ 严格模式：从头开始！', true, 800)
+        setTimeout(() => { userInput.value = '' }, 50)
+        comboSystem.resetCombo()
+    } else {
+        setMessage('输入错误，请使用退格键修正', true, 1500)
+        comboSystem.resetCombo()
+    }
+}
+
+const handleWordComplete = () => {
+    // 立即更新统计 - 这是关键修复点！
+    correctCount.value++
+    totalCount.value++
+    
+    setMessage('完美！', false, 250)
+    comboSystem.incrementCombo((_count, message) => {
+        successMessage.value = message
+        setTimeout(() => clearMessages(), 1500)
+    })
+
+    // 使用 requestAnimationFrame 优化DOM更新时机
+    requestAnimationFrame(() => {
+        completeCurrentWord()
+    })
+}
+
+const handleWordIncomplete = () => {
+    const mode = settings.value.practiceMode
+    
+    // 错误时也要统计（用于准确率计算）
+    totalCount.value++
+    
+    if (mode === 'normal') {
+        setMessage('单词不完全正确，请检查并修正', true, 1500)
+        comboSystem.resetCombo()
+    } else {
+        const message = mode === 'hardcore' ? '💥 硬核模式：全部重来！' : '⚡ 严格模式：从头开始！'
+        setMessage(message, true, 800)
+        
+        setTimeout(() => {
+            if (mode === 'hardcore') {
+                practiceStore.resetChapter()
+                timer.resetTimer()
+            } else {
+                userInput.value = ''
+            }
+        }, 50)
+        comboSystem.resetCombo()
+    }
+}
+
+// 修复统计更新逻辑
+const completeCurrentWord = () => {
+    if (!currentWord.value) return
+
+    // 清除错误状态
+    practiceStore.clearWordError(currentWordIndex.value)
+    
+    // 直接调用 nextWord，不通过 submitWord（避免重复统计）
+    practiceStore.nextWord()
+    
+    // 延迟执行回调，避免阻塞主线程
+    setTimeout(() => {
+        if (settings.value.soundEnabled && currentWord.value && !isCompleted.value) {
+            playPronunciation()
+        }
+    }, 100)
 }
 
 // 处理输入框相关的键盘事件（Enter, Backspace等）
 const handleKeydown = (event: KeyboardEvent) => {
-    inputHandler.onKeydown(event, isPaused.value, skipWord)
+    if (isPaused.value) return
+
+    if (event.key === 'Tab' || event.key === 'Enter') {
+        event.preventDefault()
+    }
+
+    if (event.key === 'Backspace') {
+        if (settings.value.practiceMode === 'normal') {
+            clearMessages()
+        } else if (settings.value.loopOnError && errorMessage.value) {
+            clearMessages()
+        }
+    }
 }
 
 const toggleSettings = () => {
@@ -163,6 +317,10 @@ const togglePause = () => {
 
 const skipWord = () => {
     if (!currentWord.value) return
+    
+    // 跳过时也要统计
+    totalCount.value++
+    
     practiceStore.skipWord()
     // 立即播放下一个单词的发音（仅在章节未完成时）
     if (settings.value.soundEnabled && currentWord.value && !isCompleted.value) {
@@ -175,18 +333,14 @@ const playPronunciation = () => {
     practiceStore.playPronunciation(currentWord.value.word)
 }
 
-// 移除了音频预加载功能，依赖浏览器 HTTP 缓存
-
 const nextChapter = () => {
     practiceStore.nextChapter()
-    // 使用双重 nextTick 确保所有状态更新和DOM渲染完成
+    timer.resetTimer()
     nextTick(() => {
-        nextTick(() => {
-            focusInput()
-            if (settings.value.soundEnabled && currentWord.value) {
-                playPronunciation()
-            }
-        })
+        focusInput()
+        if (settings.value.soundEnabled && currentWord.value) {
+            playPronunciation()
+        }
     })
 }
 
@@ -198,57 +352,63 @@ const startDictation = () => {
 
 const resetCurrentChapter = () => {
     practiceStore.resetChapter()
-    // 使用双重 nextTick 确保所有状态更新和DOM渲染完成
+    timer.resetTimer()
     nextTick(() => {
-        nextTick(() => {
-            focusInput()
-            if (settings.value.soundEnabled && currentWord.value) {
-                playPronunciation()
-            }
-        })
+        focusInput()
+        if (settings.value.soundEnabled && currentWord.value) {
+            playPronunciation()
+        }
     })
 }
 
 const randomizeChapter = () => {
     practiceStore.shuffleCurrentChapter()
-    // 使用双重 nextTick 确保所有状态更新和DOM渲染完成
+    timer.resetTimer()
     nextTick(() => {
-        nextTick(() => {
-            focusInput()
-            if (settings.value.soundEnabled && currentWord.value) {
-                playPronunciation()
-            }
-        })
+        focusInput()
+        if (settings.value.soundEnabled && currentWord.value) {
+            playPronunciation()
+        }
     })
 }
 
 const onChapterChange = (value: string) => {
     currentChapter.value = parseInt(value)
     practiceStore.resetChapter()
-    // 使用双重 nextTick 确保所有状态更新和DOM渲染完成
+    timer.resetTimer()
     nextTick(() => {
-        nextTick(() => {
-            focusInput()
-            if (settings.value.soundEnabled && currentWord.value) {
-                playPronunciation()
-            }
-        })
+        focusInput()
+        if (settings.value.soundEnabled && currentWord.value) {
+            playPronunciation()
+        }
     })
 }
 
+// 优化焦点管理：减少不必要的DOM操作
+let focusTimeoutId: number | null = null
+
 const focusInput = () => {
+    // 清除之前的定时器，避免重复执行
+    if (focusTimeoutId) {
+        clearTimeout(focusTimeoutId)
+        focusTimeoutId = null
+    }
+    
     if (practiceViewRef.value?.inputRef && !isPaused.value && !showSettings.value) {
         const inputElement = practiceViewRef.value.inputRef
-        // 强制聚焦并清除任何可能的选中状态
-        inputElement.focus()
-        inputElement.setSelectionRange(inputElement.value.length, inputElement.value.length)
         
-        // 确保输入框真正获得焦点
-        setTimeout(() => {
-            if (document.activeElement !== inputElement) {
+        // 检查是否已经聚焦，避免不必要的操作
+        if (document.activeElement === inputElement) {
+            return
+        }
+        
+        // 使用 requestAnimationFrame 优化DOM操作时机
+        requestAnimationFrame(() => {
+            if (!isPaused.value && !showSettings.value) {
                 inputElement.focus()
+                inputElement.setSelectionRange(inputElement.value.length, inputElement.value.length)
             }
-        }, 10)
+        })
     }
 }
 
@@ -285,8 +445,8 @@ const previousWord = () => {
         const prevWord = currentChapterWords.value[currentWordIndex.value - 1]
         if (prevWord) {
             // 可以在这里实现一个小的预览提示
-            inputHandler.successMessage.value = `上一个单词: ${prevWord.word} - ${prevWord.translation}`
-            setTimeout(() => inputHandler.clearMessages(), 2000)
+            successMessage.value = `上一个单词: ${prevWord.word} - ${prevWord.translation}`
+            setTimeout(() => clearMessages(), 2000)
         }
     }
 }
@@ -316,14 +476,12 @@ useKeyboardShortcuts({
         if (isLastChapter) {
             currentChapter.value = 0
             practiceStore.resetChapter()
-            // 使用双重 nextTick 确保所有状态更新和DOM渲染完成
+            timer.resetTimer()
             nextTick(() => {
-                nextTick(() => {
-                    focusInput()
-                    if (settings.value.soundEnabled && currentWord.value) {
-                        playPronunciation()
-                    }
-                })
+                focusInput()
+                if (settings.value.soundEnabled && currentWord.value) {
+                    playPronunciation()
+                }
             })
         } else {
             nextChapter()

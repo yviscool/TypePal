@@ -101,36 +101,19 @@ export const usePracticeStore = defineStore('practice', () => {
     }
   })
 
-  // 获取单词状态的计算属性
-  const getWordStatus = computed(() => {
-    return (index: number): WordStatus => {
-      // 当前正在练习的单词
-      if (index === currentWordIndex.value) {
-        return 'current'
-      }
-      
-      // 检查是否被跳过
-      if (skippedWords.value.has(index)) {
-        return 'skipped'
-      }
-      
-      // 检查是否有错误记录
-      if (errorWords.value.has(index)) {
-        return 'error'
-      }
-      
-      // 检查是否已完成
-      const completionCount = wordCompletionCounts.value.get(index) || 0
-      const requiredCount = settings.value.wordLoopCount === 'infinite' ? 1 : parseInt(settings.value.wordLoopCount)
-      
-      if (completionCount >= requiredCount) {
-        return 'completed'
-      }
-      
-      // 未开始练习
-      return 'untouched'
-    }
-  })
+  // 获取单词状态（直接函数，确保子组件使用时能读取到最新的响应式数据）
+  const getWordStatus = (index: number): WordStatus => {
+    if (index === currentWordIndex.value) return 'current'
+
+    const completionCount = wordCompletionCounts.value.get(index) || 0
+    const requiredCount =
+      settings.value.wordLoopCount === 'infinite' ? 1 : parseInt(settings.value.wordLoopCount)
+
+    if (completionCount >= requiredCount) return 'completed'
+    if (skippedWords.value.has(index)) return 'skipped'
+    if (errorWords.value.has(index)) return 'error'
+    return 'untouched'
+  }
 
   // 方法
   const setDictionary = (dictionary: Dictionary) => {
@@ -170,14 +153,17 @@ export const usePracticeStore = defineStore('practice', () => {
   const submitWord = () => {
     if (!currentWord.value) return false
     
-    totalCount.value++
     const isCorrect = userInput.value.trim().toLowerCase() === currentWord.value.word.toLowerCase()
     
     if (isCorrect) {
+      // 只有正确时才增加统计
       correctCount.value++
+      totalCount.value++
       nextWord()
       return true
     } else {
+      // 错误时也要增加总数（用于准确率计算）
+      totalCount.value++
       if (!settings.value.loopOnError) {
         nextWord()
       }
@@ -195,6 +181,11 @@ export const usePracticeStore = defineStore('practice', () => {
     
     // 增加当前单词的完成次数
     wordCompletionCounts.value.set(currentIndex, currentCount + 1)
+    
+    // 清理当前单词的跳过和错误状态（因为已经正确完成）
+    skippedWords.value.delete(currentIndex)
+    errorWords.value.delete(currentIndex)
+    
     
     // 检查是否需要继续循环当前单词
     if (currentCount + 1 < requiredCount) {
@@ -216,13 +207,13 @@ export const usePracticeStore = defineStore('practice', () => {
     // 标记当前单词为跳过状态
     skippedWords.value.add(currentWordIndex.value)
     
-    // 跳过当前单词（用于空格键或其他跳过操作）
-    totalCount.value++
-    
     // 移动到下一个单词（不增加完成计数）
+    // 注意：统计已在 Practice.vue 中处理，这里不重复统计
     const words = currentChapterWords.value
     if (currentWordIndex.value < words.length - 1) {
       currentWordIndex.value++
+      // 更新新的当前单词状态
+      updateWordStatusCache(currentWordIndex.value)
       userInput.value = ''
     } else {
       completeChapter()
@@ -280,16 +271,34 @@ export const usePracticeStore = defineStore('practice', () => {
     }
   }
 
+  // 音频对象池，避免频繁创建销毁
+  const audioPool = new Map<string, HTMLAudioElement>()
+  const maxPoolSize = 10
+
   const playPronunciation = (word: string) => {
     if (!settings.value.soundEnabled) return
     
     const url = getPronunciationUrl(word)
-    if (url) {
-      const audio = new Audio(url)
+    if (!url) return
+
+    // 尝试从池中获取音频对象
+    let audio = audioPool.get(url)
+    
+    if (!audio) {
+      // 池中没有，创建新的音频对象
+      audio = new Audio(url)
       audio.volume = 0.8
-      // 依赖浏览器的 HTTP 缓存，无需应用层缓存
-      audio.play().catch(console.error)
+      audio.preload = 'metadata' // 只预加载元数据，不预加载音频内容
+      
+      // 如果池未满，加入池中
+      if (audioPool.size < maxPoolSize) {
+        audioPool.set(url, audio)
+      }
     }
+    
+    // 重置播放位置并播放
+    audio.currentTime = 0
+    audio.play().catch(console.error)
   }
 
   const shuffleCurrentChapter = () => {

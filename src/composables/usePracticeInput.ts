@@ -1,150 +1,141 @@
-import { ref, nextTick } from 'vue'
-import { storeToRefs } from 'pinia'
-import { usePracticeStore } from '@/stores/practice'
+/**
+ * 重构后的输入处理器 - 单一职责：处理用户输入事件
+ * 移除了消息管理、状态更新等职责，专注于输入验证和事件分发
+ */
+import { ref } from 'vue'
+import { PracticeEngine, type InputResult } from '@/core/PracticeEngine'
+import { MessageSystem } from '@/core/MessageSystem'
+import { PRACTICE_CONFIG, type PracticeMode } from '@/core/PracticeConfig'
 
-export function usePracticeInput() {
-  const practiceStore = usePracticeStore()
-  const { 
-    currentWord, 
-    userInput, 
-    settings, 
-    currentWordIndex, 
-    startTime, 
-    totalCount, 
-    correctCount 
-  } = storeToRefs(practiceStore)
+export interface InputHandlers {
+  onComboIncrement: () => void
+  onComboReset: () => void
+  onStartTimer: () => void
+  onWordComplete?: () => void
+}
 
-  const errorMessage = ref('')
-  const successMessage = ref('')
-
-  const clearMessages = () => {
-    errorMessage.value = ''
-    successMessage.value = ''
-  }
-
-  const onInput = (event: Event, onComboIncrement: () => void, onComboReset: () => void, onStartTimer: () => void, onWordComplete?: () => void) => {
-    if (!currentWord.value) return
-
+export function usePracticeInput(
+  engine: PracticeEngine,
+  messageSystem: MessageSystem
+) {
+  // 输入防抖
+  let lastProcessedValue = ''
+  
+  const processInput = (
+    event: Event,
+    handlers: InputHandlers
+  ): void => {
     const target = event.target as HTMLInputElement
     const newValue = target.value
 
-    // 更新 store 中的 userInput
-    userInput.value = newValue
+    // 防抖：避免重复处理相同输入
+    if (newValue === lastProcessedValue) return
+    lastProcessedValue = newValue
 
-    clearMessages()
+    const result = engine.processInput(newValue)
+    handleInputResult(result, handlers)
+  }
 
-    // 开始计时
-    if (!startTime.value) {
-      practiceStore.startPractice()
-      onStartTimer()
-    }
-
-    // 限制输入长度不超过当前单词长度
-    if (newValue.length > currentWord.value.word.length) {
-      const trimmedValue = newValue.slice(0, currentWord.value.word.length)
-      userInput.value = trimmedValue
-      target.value = trimmedValue
-      return
-    }
-
-    // 检查当前输入的字符是否正确
-    if (newValue.length > 0) {
-      const currentIndex = newValue.length - 1
-      const currentChar = newValue[currentIndex].toLowerCase()
-      const expectedChar = currentWord.value.word[currentIndex].toLowerCase()
-
-      if (currentChar !== expectedChar) {
-        // 根据练习模式处理错误
-        practiceStore.markWordError(currentWordIndex.value)
-
-        if (settings.value.practiceMode === 'hardcore') {
-          errorMessage.value = '💥 硬核模式：全部重来！'
-          setTimeout(clearMessages, 800)
-          practiceStore.resetChapter()
-          onComboReset()
-        } else if (settings.value.practiceMode === 'strict') {
-          errorMessage.value = '⚡ 严格模式：从头开始！'
-          setTimeout(clearMessages, 800)
-          userInput.value = ''
-          onComboReset()
-        } else {
-          errorMessage.value = '输入错误，请使用退格键修正'
-          setTimeout(clearMessages, 1500)
-          onComboReset()
-        }
-      } else {
-        // 正确输入，检查是否完成单词
-        if (newValue.length === currentWord.value.word.length) {
-          const isWordComplete = newValue.toLowerCase() === currentWord.value.word.toLowerCase()
-
-          if (isWordComplete) {
-            successMessage.value = '完美！'
-            onComboIncrement()
-
-            setTimeout(() => {
-              clearMessages()
-              completeCurrentWord(onWordComplete)
-            }, 250)
-          } else {
-            if (settings.value.practiceMode === 'normal') {
-              errorMessage.value = '单词不完全正确，请检查并修正'
-              setTimeout(clearMessages, 1500)
-              onComboReset()
-            } else {
-              errorMessage.value = settings.value.practiceMode === 'hardcore' ? '💥 硬核模式：全部重来！' : '⚡ 严格模式：从头开始！'
-              setTimeout(clearMessages, 800)
-              if (settings.value.practiceMode === 'hardcore') {
-                practiceStore.resetChapter()
-              } else {
-                userInput.value = ''
-              }
-              onComboReset()
-            }
-          }
-        }
-      }
+  const handleInputResult = (
+    result: InputResult,
+    handlers: InputHandlers
+  ): void => {
+    switch (result.type) {
+      case 'no-word':
+      case 'empty-input':
+        messageSystem.clear()
+        break
+        
+      case 'char-correct':
+        // 字符正确，继续输入
+        break
+        
+      case 'char-incorrect':
+        handleCharError(handlers)
+        break
+        
+      case 'word-complete':
+        handleWordComplete(handlers)
+        break
+        
+      case 'word-incorrect':
+        handleWordIncomplete(handlers)
+        break
     }
   }
 
-  const completeCurrentWord = (onWordComplete?: () => void) => {
-    if (!currentWord.value) return
-
-    practiceStore.clearWordError(currentWordIndex.value)
-    totalCount.value++
-    correctCount.value++
-    practiceStore.nextWord()
+  const handleCharError = (handlers: InputHandlers): void => {
+    const mode = engine.getSettings().practiceMode as PracticeMode
+    const message = PRACTICE_CONFIG.MODE_MESSAGES[mode]
     
-    // 单词完成后的回调，用于播放下一个单词的发音
-    if (onWordComplete) {
-      setTimeout(() => {
-        onWordComplete()
-      }, 300)
+    messageSystem.show(message, 'error', PRACTICE_CONFIG.MESSAGE_DURATION.ERROR)
+    handlers.onComboReset()
+    
+    // 根据模式执行相应操作
+    if (mode === 'hardcore') {
+      setTimeout(() => engine.resetChapter(), PRACTICE_CONFIG.RESET_DELAY)
+    } else if (mode === 'strict') {
+      setTimeout(() => engine.clearInput(), PRACTICE_CONFIG.RESET_DELAY)
     }
   }
 
-  const onKeydown = (event: KeyboardEvent, isPaused: boolean, onSkipWord: () => void) => {
+  const handleWordComplete = (handlers: InputHandlers): void => {
+    messageSystem.show('完美！', 'success', PRACTICE_CONFIG.MESSAGE_DURATION.SUCCESS)
+    handlers.onComboIncrement()
+    
+    // 使用 requestAnimationFrame 优化DOM更新时机
+    requestAnimationFrame(() => {
+      engine.completeCurrentWord()
+      if (handlers.onWordComplete) {
+        setTimeout(handlers.onWordComplete, PRACTICE_CONFIG.WORD_COMPLETE_CALLBACK_DELAY)
+      }
+    })
+  }
+
+  const handleWordIncomplete = (handlers: InputHandlers): void => {
+    const mode = engine.getSettings().practiceMode as PracticeMode
+    
+    if (mode === 'normal') {
+      messageSystem.show('单词不完全正确，请检查并修正', 'error', PRACTICE_CONFIG.MESSAGE_DURATION.ERROR)
+      handlers.onComboReset()
+    } else {
+      const message = PRACTICE_CONFIG.MODE_MESSAGES[mode]
+      messageSystem.show(message, 'error', PRACTICE_CONFIG.MESSAGE_DURATION.ERROR)
+      
+      setTimeout(() => {
+        if (mode === 'hardcore') {
+          engine.resetChapter()
+        } else {
+          engine.clearInput()
+        }
+      }, PRACTICE_CONFIG.RESET_DELAY)
+      handlers.onComboReset()
+    }
+  }
+
+  const handleKeydown = (
+    event: KeyboardEvent,
+    isPaused: boolean,
+    onSkipWord: () => void
+  ): void => {
     if (isPaused) return
 
+    // 阻止默认行为
     if (event.key === 'Tab' || event.key === 'Enter') {
       event.preventDefault()
     }
 
+    // 退格键处理
     if (event.key === 'Backspace') {
-      if (settings.value.practiceMode === 'normal') {
-        clearMessages()
-      } else if (settings.value.loopOnError && errorMessage.value) {
-        clearMessages()
+      const settings = engine.getSettings()
+      if (settings.practiceMode === 'normal' || settings.loopOnError) {
+        messageSystem.clear()
       }
     }
-
-    // 空格键处理已移至 useKeyboardShortcuts.ts 中统一处理
   }
 
   return {
-    errorMessage,
-    successMessage,
-    clearMessages,
-    onInput,
-    onKeydown
+    processInput,
+    handleKeydown
   }
 }
