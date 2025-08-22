@@ -5,13 +5,16 @@
 import { ref } from 'vue'
 import { PracticeEngine, type InputResult } from '@/core/PracticeEngine'
 import { MessageSystem } from '@/core/MessageSystem'
-import { PRACTICE_CONFIG, type PracticeMode } from '@/core/PracticeConfig'
+import { PRACTICE_CONFIG } from '@/core/PracticeConfig'
+import type { PracticeMode } from '@/types/practice'
+import { SoundSystem } from '@/core/SoundSystem'
 
 export interface InputHandlers {
   onComboIncrement: () => void
   onComboReset: () => void
   onStartTimer: () => void
   onWordComplete?: () => void
+  onPlaySound?: (type: 'keypress' | 'correct' | 'error') => void
 }
 
 export function usePracticeInput(
@@ -32,6 +35,11 @@ export function usePracticeInput(
     if (newValue === lastProcessedValue) return
     lastProcessedValue = newValue
 
+    // 播放按键音效
+    if (handlers.onPlaySound && newValue.length > 0) {
+      handlers.onPlaySound('keypress')
+    }
+
     const result = engine.processInput(newValue)
     handleInputResult(result, handlers)
   }
@@ -51,14 +59,26 @@ export function usePracticeInput(
         break
         
       case 'char-incorrect':
+        // 播放错误音效
+        if (handlers.onPlaySound) {
+          handlers.onPlaySound('error')
+        }
         handleCharError(handlers)
         break
         
       case 'word-complete':
+        // 播放正确音效
+        if (handlers.onPlaySound) {
+          handlers.onPlaySound('correct')
+        }
         handleWordComplete(handlers)
         break
         
       case 'word-incorrect':
+        // 播放错误音效
+        if (handlers.onPlaySound) {
+          handlers.onPlaySound('error')
+        }
         handleWordIncomplete(handlers)
         break
     }
@@ -116,7 +136,8 @@ export function usePracticeInput(
   const handleKeydown = (
     event: KeyboardEvent,
     isPaused: boolean,
-    onSkipWord: () => void
+    onSkipWord: () => void,
+    handlers?: Pick<InputHandlers, 'onPlaySound'>
   ): void => {
     if (isPaused) return
 
@@ -130,6 +151,11 @@ export function usePracticeInput(
       const settings = engine.getSettings()
       if (settings.practiceMode === 'normal' || settings.loopOnError) {
         messageSystem.clear()
+      }
+      
+      // 播放按键音效
+      if (handlers?.onPlaySound) {
+        handlers.onPlaySound('keypress')
       }
     }
   }

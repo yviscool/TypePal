@@ -2,6 +2,7 @@
  * 练习相关类型定义 - 统一管理所有练习相关的类型
  * 确保类型安全和一致性
  */
+import { SupportedLanguage } from './dictionary'
 
 // 基础单词接口
 export interface Word {
@@ -20,19 +21,31 @@ export interface Dictionary {
   category: string
   tags: string[]
   words: Word[]
-  language: 'en' | 'zh' | 'ja' | 'de' | 'id' | 'hapin' | 'kk'
+  language: SupportedLanguage
 }
+
+// 发音语言类型
+export type PronunciationLanguage = 'us' | 'uk' | 'romaji' | 'zh' | 'ja' | 'de' | 'hapin' | 'kk' | 'id'
+
+// 练习模式枚举
+export type PracticeMode = 'normal' | 'strict' | 'hardcore'
+
+// 连击特效级别
+export type ComboEffectLevel = 'none' | 'simple' | 'gorgeous'
+
+// 单词循环次数类型
+export type WordLoopCount = '1' | '3' | '5' | '8' | 'infinite'
 
 // 练习设置接口
 export interface PracticeSettings {
-  pronunciation: 'us' | 'uk' | 'romaji' | 'zh' | 'ja' | 'de' | 'hapin' | 'kk' | 'id'
+  pronunciation: PronunciationLanguage
   showTranslation: boolean
   loopOnError: boolean
   dictationMode: boolean
   soundEnabled: boolean
-  practiceMode: 'normal' | 'strict' | 'hardcore'
-  wordLoopCount: '1' | '3' | '5' | '8' | 'infinite'
-  comboEffectsLevel: 'none' | 'simple' | 'gorgeous'
+  practiceMode: PracticeMode
+  wordLoopCount: WordLoopCount
+  comboEffectsLevel: ComboEffectLevel
 }
 
 // 单词状态类型
@@ -63,18 +76,6 @@ export interface ChapterInfo {
   completedWords: number
   progress: number
 }
-
-// 练习模式枚举
-export type PracticeMode = 'normal' | 'strict' | 'hardcore'
-
-// 发音语言类型
-export type PronunciationLanguage = 'us' | 'uk' | 'romaji' | 'zh' | 'ja' | 'de' | 'hapin' | 'kk' | 'id'
-
-// 连击特效级别
-export type ComboEffectLevel = 'none' | 'simple' | 'gorgeous'
-
-// 单词循环次数类型
-export type WordLoopCount = '1' | '3' | '5' | '8' | 'infinite'
 
 // 练习事件类型
 export interface PracticeEvents {

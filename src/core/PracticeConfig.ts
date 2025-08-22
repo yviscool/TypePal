@@ -2,6 +2,9 @@
  * 练习配置管理 - 单一职责：管理所有配置常量和规则
  * 消除硬编码，提供类型安全的配置访问
  */
+import type { PracticeMode } from '@/types/practice'
+import type { TypingSoundVariant } from '@/types/sound'
+
 export const PRACTICE_CONFIG = {
   // 章节配置
   WORDS_PER_CHAPTER: 20,
@@ -24,6 +27,28 @@ export const PRACTICE_CONFIG = {
   // 音频配置
   AUDIO_POOL_SIZE: 10,
   AUDIO_VOLUME: 0.8,
+  
+  // 打字音效配置
+  TYPING_SOUNDS: {
+    ENABLED_DEFAULT: false,
+    DEFAULT_VARIANT: 'Default' as TypingSoundVariant,
+    VARIANTS: [
+      'Default',
+      'Cherry MX Blues',
+      'Cherry MX Browns',
+      'Cherry MX Blacks',
+      'Gateron Black Inks',
+      'Gateron Red Inks',
+      'Holy Pandas',
+      'NovelKeys Creams',
+      'Kailh Box Navies',
+      'Alpacas',
+      'Turquoise Tealios',
+      'Topre',
+      'SKCM Blue Alps',
+      'Buckling Spring'
+    ] as TypingSoundVariant[]
+  },
   
   // 焦点管理
   FOCUS_RETRY_DELAY: 16, // 一帧的时间
@@ -52,7 +77,6 @@ export const PRACTICE_CONFIG = {
   } as const
 } as const
 
-export type PracticeMode = keyof typeof PRACTICE_CONFIG.MODE_MESSAGES
 export type LanguageCode = keyof typeof PRACTICE_CONFIG.LANGUAGE_MAPPING
 
 /**
@@ -69,5 +93,9 @@ export class ConfigValidator {
   
   public static validateLanguageCode(code: string): code is LanguageCode {
     return code in PRACTICE_CONFIG.LANGUAGE_MAPPING
+  }
+  
+  public static validateTypingSoundVariant(variant: string): variant is TypingSoundVariant {
+    return PRACTICE_CONFIG.TYPING_SOUNDS.VARIANTS.includes(variant as TypingSoundVariant)
   }
 }

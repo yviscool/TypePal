@@ -1,6 +1,12 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import type { Word, Dictionary, PracticeSettings, WordStatus } from '@/types/practice'
+import { SoundSystem } from '@/core/SoundSystem'
+import type { TypingSoundVariant } from '@/types/sound'
+import { PRACTICE_CONFIG } from '@/core/PracticeConfig'
+
+// 创建全局声音系统实例
+const soundSystem = new SoundSystem()
 
 export const usePracticeStore = defineStore('practice', () => {
   // 状态
@@ -26,6 +32,10 @@ export const usePracticeStore = defineStore('practice', () => {
   const wpm = ref(0)
   const accuracy = ref(100)
   
+  // 声音设置
+  const typingSoundEnabled = ref<boolean>(PRACTICE_CONFIG.TYPING_SOUNDS.ENABLED_DEFAULT)
+  const typingSoundVariant = ref<TypingSoundVariant>(PRACTICE_CONFIG.TYPING_SOUNDS.DEFAULT_VARIANT)
+  
   // 设置
   const settings = ref<PracticeSettings>({
     pronunciation: 'us',
@@ -37,12 +47,19 @@ export const usePracticeStore = defineStore('practice', () => {
     wordLoopCount: '1',
     comboEffectsLevel: 'gorgeous'
   })
+  
+  // 初始化声音系统
+  onMounted(() => {
+    soundSystem.setEnabled(settings.value.soundEnabled)
+    soundSystem.setTypingSoundEnabled(typingSoundEnabled.value)
+    soundSystem.setTypingSoundVariant(typingSoundVariant.value)
+  })
 
   // 计算属性
   const currentChapterWords = computed(() => {
     if (!currentDictionary.value) return []
-    const start = currentChapter.value * 20
-    const end = Math.min(start + 20, currentDictionary.value.words.length)
+    const start = currentChapter.value * PRACTICE_CONFIG.WORDS_PER_CHAPTER
+    const end = Math.min(start + PRACTICE_CONFIG.WORDS_PER_CHAPTER, currentDictionary.value.words.length)
     return currentDictionary.value.words.slice(start, end)
   })
 
@@ -209,60 +226,31 @@ export const usePracticeStore = defineStore('practice', () => {
     accuracy.value = totalCount.value > 0 ? Math.round((correctCount.value / totalCount.value) * 100) : 100
   }
 
-  const getPronunciationUrl = (word: string) => {
-    const pronunciationApi = 'https://dict.youdao.com/dictvoice?audio='
-    
-    switch (settings.value.pronunciation) {
-      case 'uk':
-        return `${pronunciationApi}${word}&type=1`
-      case 'us':
-        return `${pronunciationApi}${word}&type=2`
-      case 'romaji':
-        return `${pronunciationApi}${word}&le=jap`
-      case 'zh':
-        return `${pronunciationApi}${word}&le=zh`
-      case 'ja':
-        return `${pronunciationApi}${word}&le=jap`
-      case 'de':
-        return `${pronunciationApi}${word}&le=de`
-      case 'hapin':
-      case 'kk':
-        return `${pronunciationApi}${word}&le=ru` // 有道不支持哈萨克语, 暂时用俄语发音兜底
-      case 'id':
-        return `${pronunciationApi}${word}&le=id`
-      default:
-        return ''
-    }
-  }
-
-  // 音频对象池，避免频繁创建销毁
-  const audioPool = new Map<string, HTMLAudioElement>()
-  const maxPoolSize = 10
-
+  // 声音相关方法
   const playPronunciation = (word: string) => {
-    if (!settings.value.soundEnabled) return
-    
-    const url = getPronunciationUrl(word)
-    if (!url) return
-
-    // 尝试从池中获取音频对象
-    let audio = audioPool.get(url)
-    
-    if (!audio) {
-      // 池中没有，创建新的音频对象
-      audio = new Audio(url)
-      audio.volume = 0.8
-      audio.preload = 'metadata' // 只预加载元数据，不预加载音频内容
-      
-      // 如果池未满，加入池中
-      if (audioPool.size < maxPoolSize) {
-        audioPool.set(url, audio)
-      }
-    }
-    
-    // 重置播放位置并播放
-    audio.currentTime = 0
-    audio.play().catch(console.error)
+    if (!settings.value.soundEnabled || !word) return
+    soundSystem.playPronunciation(word, settings.value.pronunciation)
+  }
+  
+  const playTypingSound = (type: 'keypress' | 'correct' | 'error') => {
+    if (!settings.value.soundEnabled || !typingSoundEnabled.value) return
+    soundSystem.playTypingSound(type)
+  }
+  
+  // 设置声音状态
+  const setSoundEnabled = (enabled: boolean) => {
+    settings.value.soundEnabled = enabled
+    soundSystem.setEnabled(enabled)
+  }
+  
+  const setTypingSoundEnabled = (enabled: boolean) => {
+    typingSoundEnabled.value = enabled
+    soundSystem.setTypingSoundEnabled(enabled)
+  }
+  
+  const setTypingSoundVariant = (variant: TypingSoundVariant) => {
+    typingSoundVariant.value = variant
+    soundSystem.setTypingSoundVariant(variant)
   }
 
   const shuffleCurrentChapter = () => {
@@ -300,6 +288,8 @@ export const usePracticeStore = defineStore('practice', () => {
     wpm,
     accuracy,
     settings,
+    typingSoundEnabled,
+    typingSoundVariant,
     
     // 计算属性
     currentChapterWords,
@@ -317,10 +307,15 @@ export const usePracticeStore = defineStore('practice', () => {
     nextWord,
     skipWord,
     completeChapter,
-    playPronunciation,
-    getPronunciationUrl,
     shuffleCurrentChapter,
     markWordError,
-    clearWordError
+    clearWordError,
+    
+    // 声音相关方法
+    playPronunciation,
+    playTypingSound,
+    setSoundEnabled,
+    setTypingSoundEnabled,
+    setTypingSoundVariant
   }
 })
