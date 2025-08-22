@@ -2,29 +2,29 @@
   <div class="max-w-4xl mx-auto mt-30 relative">
     <div v-if="!isCompleted && currentWord" class="text-center">
       <!-- 浮动导航按钮 - 上一个单词 (左侧) -->
-      <div class="fixed left-4 md:left-8 top transform -translate-y-1/2 z-10">
-        <button @click="$emit('previousWord')" :disabled="currentWordIndex === 0"
+      <div class="fixed left-4 md:left-8 transform -translate-y-1/2 z-10">
+        <button @click="practiceStore.previousWord()" :disabled="currentWordIndex === 0"
           class="group p-3 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20 hover:scale-105 transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed shadow-lg"
           title="上一个单词">
           <div class="flex items-center gap-3">
             <div class="i-ph-arrow-left text-xl text-coral-400 group-hover:text-coral-300 transition-colors duration-200"></div>
             <div v-if="currentWordIndex > 0" class="hidden md:block text-left">
-              <div class="text-sm font-bold text-black/90">{{ currentChapterWords[currentWordIndex - 1]?.word }}</div>
-              <div class="text-xs text-black/60 max-w-20 truncate">{{ currentChapterWords[currentWordIndex - 1]?.translation }}</div>
+              <div class="text-sm font-bold text-black/90 dark:text-white/90">{{ currentChapterWords[currentWordIndex - 1]?.word }}</div>
+              <div class="text-xs text-black/60 dark:text-white/60 max-w-20 truncate">{{ currentChapterWords[currentWordIndex - 1]?.translation }}</div>
             </div>
           </div>
         </button>
       </div>
 
       <!-- 浮动导航按钮 - 下一个单词 (右侧) -->
-      <div class="fixed right-4 md:right-8 top transform -translate-y-1/2 z-10">
-        <button @click="$emit('skipWord')" :disabled="currentWordIndex >= currentChapterWords.length - 1"
+      <div class="fixed right-4 md:right-8 transform -translate-y-1/2 z-10">
+        <button @click="practiceStore.skipWord()" :disabled="currentWordIndex >= currentChapterWords.length - 1"
           class="group p-3 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20 hover:scale-105 transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed shadow-lg"
-          title="下一个单词">
+          title="下一个单词 (Tab)">
           <div class="flex items-center gap-3">
             <div v-if="currentWordIndex < currentChapterWords.length - 1" class="hidden md:block text-right">
-              <div class="text-sm font-bold text-black/90">{{ currentChapterWords[currentWordIndex + 1]?.word }}</div>
-              <div class="text-xs text-black/60 max-w-20 truncate">{{ currentChapterWords[currentWordIndex + 1]?.translation }}</div>
+              <div class="text-sm font-bold text-black/90 dark:text-white/90">{{ currentChapterWords[currentWordIndex + 1]?.word }}</div>
+              <div class="text-xs text-black/60 dark:text-white/60 max-w-20 truncate">{{ currentChapterWords[currentWordIndex + 1]?.translation }}</div>
             </div>
             <div class="i-ph-arrow-right text-xl text-coral-400 group-hover:text-coral-300 transition-colors duration-200"></div>
           </div>
@@ -40,17 +40,16 @@
         <div class="flex justify-center mb-8">
           <div class="relative inline-block">
             <div class="text-7xl md:text-8xl font-bold tracking-wider select-none flex items-center"
-              :class="{ 'animate-word-shake': errorMessage }">
+              :class="{ 'animate-word-shake': message?.type === 'error' }">
               <span v-for="(char, index) in currentWord.word" :key="index" :class="getCharClass(index)"
-                class="inline-block transition-all duration-300 ease-out transform hover:scale-110"
-                :style="getCharStyle(index)">
+                class="inline-block transition-all duration-300 ease-out transform hover:scale-110">
                 {{ char === ' ' ? '␣' : char }}
               </span>
             </div>
             <!-- 发音按钮：始终在单词容器右侧 -->
-            <button @click="$emit('playPronunciation')"
+            <button @click="practiceStore.playPronunciation()"
               class="absolute top-1/2 -translate-y-1/2 left-full ml-4 p-4 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20 hover:scale-110 transition-all duration-300 group shadow-lg"
-              title="播放发音">
+              title="播放发音 (Alt+P)">
               <div class="i-ph-speaker-high text-2xl group-hover:animate-pulse text-coral-400"></div>
             </button>
           </div>
@@ -96,26 +95,26 @@
 
       <!-- 隐藏的输入框用于捕获键盘输入 -->
       <input ref="inputRef" :value="userInput" type="text" class="fixed opacity-0 pointer-events-none"
-        style="left: -9999px; top: -9999px;" @input="$emit('input', $event)" @keydown="$emit('keydown', $event)" :disabled="isPaused"
+        style="left: -9999px; top: -9999px;" @input="handleInput"
         autocomplete="off" spellcheck="false">
 
       <!-- 实时统计信息 -->
-      <PracticeStats :time="currentTime" :correct-count="correctCount" :wpm="currentWpm" :accuracy="accuracy" class="mb-8" />
+      <PracticeStats :time="timer.currentTime.value" :correct-count="correctCount" :wpm="liveWpm" :accuracy="accuracy" class="mb-8" />
 
       <!-- 提示信息 -->
       <div class="text-base opacity-70 mb-8 min-h-[3rem] flex items-center justify-center">
-        <div v-if="errorMessage"
+        <div v-if="message?.type === 'error'"
           class="text-red-800 font-semibold px-6 py-3 bg-gradient-to-r from-red-100/90 to-red-200/95 backdrop-blur-md rounded-xl border border-red-300/60 shadow-lg transition-all duration-300 ring-1 ring-red-300/40">
           <div class="flex items-center gap-2">
             <div class="w-2 h-2 bg-red-600 rounded-full animate-pulse shadow-sm shadow-red-500/50"></div>
-            <span class="text-sm font-medium text-red-900 drop-shadow-sm">{{ errorMessage }}</span>
+            <span class="text-sm font-medium text-red-900 drop-shadow-sm">{{ message.text }}</span>
           </div>
         </div>
-        <div v-else-if="successMessage"
+        <div v-else-if="message?.type === 'success'"
           class="text-green-800 font-semibold px-6 py-3 bg-gradient-to-r from-green-100/90 to-emerald-100/95 backdrop-blur-md rounded-xl border border-green-300/60 shadow-lg transition-all duration-300 ring-1 ring-green-300/40">
           <div class="flex items-center gap-2">
             <div class="w-2 h-2 bg-green-600 rounded-full animate-pulse shadow-sm shadow-green-500/50"></div>
-            <span class="text-sm font-medium text-green-900 drop-shadow-sm">{{ successMessage }}</span>
+            <span class="text-sm font-medium text-green-900 drop-shadow-sm">{{ message.text }}</span>
           </div>
         </div>
         <div v-else-if="!settings.dictationMode"
@@ -201,152 +200,114 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import ComboDisplay from './ComboDisplay.vue'
+import { ref, computed, watch } from 'vue'
+import { storeToRefs } from 'pinia'
+import { usePracticeStore } from '@/stores/practice'
+import { usePracticeTimer } from '@/composables/usePracticeTimer'
 import PracticeStats from './PracticeStats.vue'
-import type { Word, PracticeSettings } from '@/types/practice'
+import ComboDisplay from './ComboDisplay.vue'
 
-interface Props {
-  currentWord: Word | null
-  currentWordIndex: number
-  currentChapterWords: Word[]
-  userInput: string
-  settings: PracticeSettings
-  currentWordLoopProgress: {
-    current: number
-    required: number
-    isInfinite: boolean
-  }
-  getWordStatus: (index: number) => string
-  isPaused: boolean
-  isCompleted: boolean
-  currentTime: number
-  correctCount: number
-  currentWpm: number
-  accuracy: number
-  errorMessage: string
-  successMessage: string
-  comboCount: number
-  showCombo: boolean
-}
+// --- 核心初始化 ---
+const practiceStore = usePracticeStore()
+const {
+    userInput,
+    currentWord,
+    currentChapterWords,
+    settings,
+    correctCount,
+    accuracy,
+    currentWordIndex,
+    startTime,
+    isCompleted,
+    totalTypedChars,
+    comboCount,
+    currentWordLoopProgress,
+} = storeToRefs(practiceStore)
 
-const props = defineProps<Props>()
+// 直接从 store 访问 message，避免类型推断问题
+const message = computed(() => practiceStore.message)
 
-defineEmits<{
-  previousWord: []
-  skipWord: []
-  playPronunciation: []
-  input: [event: Event]
-  keydown: [event: KeyboardEvent]
-}>()
+const inputRef = ref<HTMLInputElement | null>(null)
 
-const inputRef = ref<HTMLInputElement>()
+// --- 本地UI状态 ---
+const showCombo = ref(false)
+let comboTimeout: number | null = null
 
-// 字符样式函数
-const getCharClass = (index: number) => {
-  if (!props.userInput || index >= props.userInput.length) {
-    return 'text-gray-400 dark:text-gray-500'
-  }
-
-  const userChar = props.userInput[index].toLowerCase()
-  const correctChar = props.currentWord?.word[index].toLowerCase()
-
-  if (userChar === correctChar) {
-    return 'text-white bg-green-500 rounded-md px-1 shadow-lg'
-  } else {
-    return 'text-white bg-red-500 rounded-md px-1 animate-shake'
-  }
-}
-
-const getCharStyle = (index: number) => {
-  if (!props.userInput || index >= props.userInput.length) {
-    return {}
-  }
-
-  const userChar = props.userInput[index].toLowerCase()
-  const correctChar = props.currentWord?.word[index].toLowerCase()
-
-  if (userChar === correctChar) {
-    return {
-      transform: 'scale(1.05)',
-      textShadow: '0 0 10px rgba(34, 197, 94, 0.5)'
+watch(comboCount, (newCount, oldCount) => {
+    if (newCount > 1 && newCount > oldCount) {
+        showCombo.value = true
+        if (comboTimeout) clearTimeout(comboTimeout)
+        comboTimeout = window.setTimeout(() => {
+            showCombo.value = false
+        }, 2000)
     }
-  } else {
-    return {
-      transform: 'scale(1.1)',
-      textShadow: '0 0 10px rgba(248, 113, 113, 0.5)'
+    if (newCount === 0) {
+        showCombo.value = false
     }
-  }
-}
-
-// 获取单词进度指示器的样式类
-const getWordProgressClass = (index: number) => {
-  const status = props.getWordStatus(index)
-
-  switch (status) {
-    case 'current':
-      return 'bg-coral-500 scale-150 shadow-lg shadow-coral-500/50 ring-2 ring-coral-500/30'
-    case 'completed':
-      return 'bg-green-400 shadow-sm scale-110 hover:scale-125'
-    case 'skipped':
-      return 'bg-yellow-400 shadow-sm scale-110 hover:scale-125'
-    case 'error':
-      return 'bg-red-400 shadow-sm scale-110 hover:scale-125'
-    case 'untouched':
-    default:
-      return 'bg-white/20 hover:bg-white/30'
-  }
-}
-
-// 获取单词状态的工具提示
-const getWordStatusTooltip = (index: number) => {
-  const status = props.getWordStatus(index)
-  const word = props.currentChapterWords[index]
-
-  if (!word) return ''
-
-  const baseInfo = `${word.word} - ${word.translation}`
-
-  switch (status) {
-    case 'current':
-      return `正在练习: ${baseInfo}`
-    case 'completed':
-      return `已完成: ${baseInfo}`
-    case 'skipped':
-      return `已跳过: ${baseInfo}`
-    case 'error':
-      return `有错误: ${baseInfo}`
-    case 'untouched':
-    default:
-      return `未练习: ${baseInfo}`
-  }
-}
-
-defineExpose({
-  inputRef
 })
+
+// --- 计时器 & 实时WPM ---
+const timer = usePracticeTimer()
+const liveWpm = computed(() => timer.calculateLiveWpm(totalTypedChars.value))
+
+// --- 响应式计时器控制 ---
+watch(startTime, (newStartTime) => {
+  if (newStartTime && !timer.isRunning.value) {
+    timer.startTimer(newStartTime)
+  }
+})
+
+watch(isCompleted, (completed) => {
+  if (completed) {
+    timer.stopTimer()
+  } else {
+    timer.resetTimer()
+  }
+})
+
+// --- 事件处理 ---
+const handleInput = (event: Event) => {
+    const target = event.target as HTMLInputElement
+    const result = practiceStore.handleInput(target.value)
+
+    if (result === 'incorrect' && userInput.value === '') {
+        target.value = ''
+    }
+}
+
+// --- 样式计算 ---
+const getCharClass = (index: number) => {
+    if (!currentWord.value) return ''
+    if (index >= userInput.value.length) {
+        return 'text-gray-400 dark:text-gray-500'
+    }
+    const isCorrect = userInput.value[index] === currentWord.value.word[index]
+    return isCorrect ? 'text-green-400' : 'text-red-400'
+}
+
+const getWordProgressClass = (index: number) => {
+    const status = practiceStore.getWordStatus(index)
+    switch (status) {
+        case 'current': return 'bg-coral-500 scale-150'
+        case 'completed': return 'bg-green-400'
+        case 'skipped': return 'bg-yellow-400'
+        case 'error': return 'bg-red-400'
+        default: return 'bg-white/20'
+    }
+}
+
+const getWordStatusTooltip = (index: number) => {
+    const word = practiceStore.currentChapterWords[index]
+    if (!word) return ''
+    const status = practiceStore.getWordStatus(index)
+    switch (status) {
+        case 'completed': return `${word.word} - 已完成`
+        case 'skipped': return `${word.word} - 已跳过`
+        case 'error': return `${word.word} - 有错误`
+        default: return word.word
+    }
+}
+
+// --- 暴露给父组件 ---
+defineExpose({ inputRef })
 </script>
-
-<style scoped>
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-5px); }
-  75% { transform: translateX(5px); }
-}
-
-@keyframes word-shake {
-  0%, 100% { transform: translateX(0); }
-  10%, 30%, 50%, 70%, 90% { transform: translateX(-3px); }
-  20%, 40%, 60%, 80% { transform: translateX(3px); }
-}
-
-.animate-shake {
-  animation: shake 0.5s ease-in-out;
-}
-
-.animate-word-shake {
-  animation: word-shake 0.6s ease-in-out;
-  color: #ef4444 !important;
-  text-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
-}
-</style>

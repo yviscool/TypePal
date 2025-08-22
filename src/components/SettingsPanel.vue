@@ -107,6 +107,43 @@
                     <span
                       class="text-sm text-gray-800 dark:text-white/90 group-hover:text-gray-900 dark:group-hover:text-white transition-colors duration-200">自动发音提示</span>
                   </label>
+
+                  <!-- 打字音效设置 -->
+                  <label class="flex items-center gap-3 cursor-pointer group">
+                    <div class="relative">
+                      <input v-model="localSettings.typingSound" type="checkbox"
+                        class="w-5 h-5 rounded-lg border-2 border-white/40 bg-white/20 checked:bg-gradient-to-br checked:from-cyber-pink checked:to-cyber-pink/80 checked:border-cyber-pink transition-all duration-300 focus:ring-2 focus:ring-cyber-pink/20">
+                      <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div
+                          class="i-ph-check text-white text-xs opacity-0 group-has-[:checked]:opacity-100 transition-opacity duration-200">
+                        </div>
+                      </div>
+                    </div>
+                    <span
+                      class="text-sm text-gray-800 dark:text-white/90 group-hover:text-gray-900 dark:group-hover:text-white transition-colors duration-200">打字音效</span>
+                  </label>
+
+                  <!-- 音效变体选择 -->
+                  <div v-if="localSettings.typingSound" class="ml-8 space-y-2">
+                    <label class="text-xs font-medium text-gray-600 dark:text-white/70">音效类型</label>
+                    <div class="space-y-1">
+                      <label class="flex items-center gap-2 cursor-pointer group">
+                        <input v-model="localSettings.typingSoundVariant" value="Default" type="radio" name="typingSoundVariant"
+                          class="w-3 h-3 text-cyber-pink bg-white/20 border-white/40 focus:ring-cyber-pink/20 focus:ring-1">
+                        <span class="text-xs text-gray-700 dark:text-white/80">🔊 默认音效</span>
+                      </label>
+                      <label class="flex items-center gap-2 cursor-pointer group">
+                        <input v-model="localSettings.typingSoundVariant" value="Cherry MX Blues" type="radio" name="typingSoundVariant"
+                          class="w-3 h-3 text-cyber-pink bg-white/20 border-white/40 focus:ring-cyber-pink/20 focus:ring-1">
+                        <span class="text-xs text-gray-700 dark:text-white/80">⌨️ 机械键盘</span>
+                      </label>
+                      <label class="flex items-center gap-2 cursor-pointer group">
+                        <input v-model="localSettings.typingSoundVariant" value="Topre" type="radio" name="typingSoundVariant"
+                          class="w-3 h-3 text-cyber-pink bg-white/20 border-white/40 focus:ring-cyber-pink/20 focus:ring-1">
+                        <span class="text-xs text-gray-700 dark:text-white/80">🎹 静电容</span>
+                      </label>
+                    </div>
+                  </div>
                   <!-- 特效设置 -->
                   <div class="space-y-3">
                     <label class="text-sm font-medium text-gray-700 dark:text-white/80">连击特效</label>

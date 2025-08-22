@@ -79,6 +79,19 @@ export const PRACTICE_CONFIG = {
 
 export type LanguageCode = keyof typeof PRACTICE_CONFIG.LANGUAGE_MAPPING
 
+export const DEFAULT_SETTINGS = {
+  pronunciation: 'us' as LanguageCode,
+  showTranslation: true,
+  loopOnError: false,
+  dictationMode: false,
+  soundEnabled: true,
+  typingSound: true,  // 默认启用打字音效
+  typingSoundVariant: 'Default' as TypingSoundVariant,
+  practiceMode: 'normal' as PracticeMode,
+  wordLoopCount: '1',
+  comboEffectsLevel: 'gorgeous'
+} as const
+
 /**
  * 配置验证器
  */

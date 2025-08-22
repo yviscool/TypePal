@@ -41,20 +41,22 @@ export class SoundSystem {
     if (!this.enabled || !this.typingSoundEnabled) return
     
     let soundPath: string
+    const baseUrl = import.meta.env.BASE_URL || ''
     
     switch (type) {
       case 'keypress':
-        soundPath = `/sounds/key-sound/${this.typingSoundVariant}.mp3`
-        // 对于默认音效，使用 wav 格式
-        if (this.typingSoundVariant === 'Default') {
-          soundPath = '/sounds/key-sound/Default.wav'
+        // 使用 click.wav 作为默认按键音效
+        if (this.typingSoundVariant === 'Default' || this.typingSoundVariant === 'Click') {
+          soundPath = `${baseUrl}sounds/click.wav`
+        } else {
+          soundPath = `${baseUrl}sounds/key-sound/${this.typingSoundVariant}.mp3`
         }
         break
       case 'correct':
-        soundPath = '/sounds/correct.wav'
+        soundPath = `${baseUrl}sounds/correct.wav`
         break
       case 'error':
-        soundPath = '/sounds/beep.wav'
+        soundPath = `${baseUrl}sounds/beep.wav`
         break
     }
     

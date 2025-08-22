@@ -1,43 +1,50 @@
 /**
  * 焦点管理器 - 单一职责：管理输入框焦点
- * 提取自 Practice.vue，消除重复的焦点管理逻辑
+ * 经过重构，更健壮、API更清晰
  */
-import { ref, type Ref } from 'vue'
-import { PRACTICE_CONFIG } from '@/core/PracticeConfig'
+import { type Ref } from 'vue'
 
-export interface FocusManagerOptions {
-  isPaused: Ref<boolean>
-  showSettings: Ref<boolean>
+// 定义组件必须暴露的接口
+interface InputExposingComponent {
+  inputRef: HTMLInputElement | null
 }
 
 export function useFocusManager(
-  inputRef: Ref<HTMLInputElement | undefined>,
-  options: FocusManagerOptions
+  componentRef: Ref<InputExposingComponent | null>,
+  isPaused: Ref<boolean>,
+  showSettings: Ref<boolean>
 ) {
-  let focusTimeoutId: number | null = null
-
   const focusInput = (): void => {
-    // 清除之前的定时器，避免重复执行
-    if (focusTimeoutId) {
-      clearTimeout(focusTimeoutId)
-      focusTimeoutId = null
+    // Guard 1: Component might not be rendered yet (due to v-if)
+    if (!componentRef.value) {
+      return
     }
     
-    const element = inputRef.value
-    if (!element || options.isPaused.value || options.showSettings.value) {
+    const inputElement = componentRef.value.inputRef
+    
+    // Guard 2: Input element might not be available yet
+    if (!inputElement) {
+        return
+    }
+
+    // Guard 3: Check conditions before focusing
+    if (isPaused.value || showSettings.value) {
       return
     }
 
-    // 检查是否已经聚焦，避免不必要的操作
-    if (document.activeElement === element) {
+    // Guard 4: Avoid re-focusing if already focused
+    if (document.activeElement === inputElement) {
       return
     }
-    
-    // 使用 requestAnimationFrame 优化DOM操作时机
+
+    // Use requestAnimationFrame to ensure focus happens after any pending DOM updates
     requestAnimationFrame(() => {
-      if (!options.isPaused.value && !options.showSettings.value && element) {
-        element.focus()
-        element.setSelectionRange(element.value.length, element.value.length)
+      // Double-check conditions inside rAF as state might have changed
+      if (componentRef.value && !isPaused.value && !showSettings.value) {
+        const el = componentRef.value.inputRef
+        if (el) {
+          el.focus()
+        }
       }
     })
   }
@@ -45,35 +52,21 @@ export function useFocusManager(
   const handlePageClick = (event: Event): void => {
     const target = event.target as HTMLElement
 
-    // 如果点击的是 select 元素或其子元素，不处理
-    if (target.tagName === 'SELECT' || target.closest('select')) {
+    // Do not focus if clicking on interactive elements
+    if (target.closest('button, a, select, input, [role="button"]')) {
       return
     }
 
-    // 如果设置面板打开，或点击的是设置面板内的元素，不处理
-    if (options.showSettings.value || target.closest('.settings-panel')) {
+    // Do not focus if settings panel is open or was clicked
+    if (showSettings.value || target.closest('.settings-panel')) {
       return
     }
 
-    // 如果当前处于暂停状态，不处理
-    if (options.isPaused.value) {
-      return
-    }
-
-    // 其他情况下聚焦输入框
     focusInput()
-  }
-
-  const cleanup = (): void => {
-    if (focusTimeoutId) {
-      clearTimeout(focusTimeoutId)
-      focusTimeoutId = null
-    }
   }
 
   return {
     focusInput,
     handlePageClick,
-    cleanup
   }
 }

@@ -46,6 +46,7 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted, onUnmounted } from 'vue'
 import PracticeStats from './PracticeStats.vue'
 
 interface Props {
@@ -58,8 +59,25 @@ interface Props {
 
 defineProps<Props>()
 
-defineEmits<{
+const emit = defineEmits<{
   startDictation: []
   nextChapter: []
 }>()
+
+// 键盘事件处理
+const handleKeydown = (event: KeyboardEvent) => {
+  if (event.key === 'Enter') {
+    event.preventDefault()
+    emit('nextChapter')
+  }
+}
+
+// 生命周期钩子
+onMounted(() => {
+  document.addEventListener('keydown', handleKeydown)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleKeydown)
+})
 </script>

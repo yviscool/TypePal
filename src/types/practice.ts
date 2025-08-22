@@ -36,6 +36,8 @@ export type ComboEffectLevel = 'none' | 'simple' | 'gorgeous'
 // 单词循环次数类型
 export type WordLoopCount = '1' | '3' | '5' | '8' | 'infinite'
 
+import type { TypingSoundVariant } from './sound'
+
 // 练习设置接口
 export interface PracticeSettings {
   pronunciation: PronunciationLanguage
@@ -43,6 +45,8 @@ export interface PracticeSettings {
   loopOnError: boolean
   dictationMode: boolean
   soundEnabled: boolean
+  typingSound: boolean
+  typingSoundVariant: TypingSoundVariant
   practiceMode: PracticeMode
   wordLoopCount: WordLoopCount
   comboEffectsLevel: ComboEffectLevel
